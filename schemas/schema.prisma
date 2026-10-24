@@ -1,0 +1,164 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  CUSTOMER
+  COURIER
+  MERCHANT_ADMIN
+  DISPATCHER
+  SUPERADMIN
+}
+
+enum VehicleType {
+  MOTORCYCLE
+  BICYCLE
+  CAR
+  SCOOTER
+}
+
+enum CourierStatus {
+  OFFLINE
+  ONLINE_IDLE
+  OFFER_PENDING
+  ASSIGNED_TO_ORDER
+  SUSPENDED
+}
+
+enum OrderStatus {
+  DRAFT
+  SUBMITTED
+  RESTAURANT_ACCEPTED
+  PREPARING
+  READY_FOR_PICKUP
+  COURIER_ASSIGNED
+  COURIER_AT_RESTAURANT
+  PICKED_UP
+  IN_TRANSIT
+  COURIER_AT_CUSTOMER
+  DELIVERED
+  CANCELLED
+  REJECTED
+}
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+  YASSIR_PAY
+  CIB_EDAHABIA
+  CREDIT_CARD
+}
+
+model User {
+  id          String   @id @default(uuid())
+  phoneNumber String   @unique
+  email       String?  @unique
+  fullName    String
+  role        UserRole @default(CUSTOMER)
+  language    String   @default("fr")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  orders   Order[]
+  courier  Courier?
+}
+
+model Merchant {
+  id              String   @id @default(uuid())
+  name            String
+  slug            String   @unique
+  description     String?
+  phoneNumber     String
+  latitude        Float
+  longitude       Float
+  addressLine     String
+  city            String
+  countryCode     String
+  h3Res8          String?
+  commissionRate  Float    @default(15.0)
+  isOpen          Boolean  @default(true)
+  prepTimeMinutes Int      @default(20)
+  rating          Float    @default(4.5)
+  createdAt       DateTime @default(now())
+
+  categories MenuCategory[]
+  orders     Order[]
+}
+
+model MenuCategory {
+  id           String     @id @default(uuid())
+  merchantId   String
+  name         String
+  displayOrder Int        @default(0)
+  merchant     Merchant   @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  items        MenuItem[]
+}
+
+model MenuItem {
+  id          String       @id @default(uuid())
+  merchantId  String
+  categoryId  String
+  title       String
+  description String?
+  priceCents  BigInt
+  currency    String       @default("DZD")
+  imageUrl    String?
+  isAvailable Boolean      @default(true)
+  category    MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+}
+
+model Courier {
+  id                   String        @id @default(uuid())
+  userId               String        @unique
+  vehicleType          VehicleType   @default(MOTORCYCLE)
+  licensePlate         String?
+  status               CourierStatus @default(OFFLINE)
+  latitude             Float?
+  longitude            Float?
+  lastPingAt           DateTime?
+  h3Res9               String?
+  acceptanceRate       Float         @default(1.0)
+  currentCashDebtCents BigInt        @default(0)
+  maxCashLimitCents    BigInt        @default(1500000)
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders               Order[]
+}
+
+model Order {
+  id                 String        @id @default(uuid())
+  customerId         String
+  merchantId         String
+  courierId          String?
+  status             OrderStatus   @default(SUBMITTED)
+  paymentMethod      PaymentMethod @default(CASH_ON_DELIVERY)
+  itemsSubtotalCents BigInt
+  deliveryFeeCents   BigInt
+  totalAmountCents   BigInt
+  currency           String        @default("DZD")
+  deliveryAddress    String
+  deliveryLatitude   Float
+  deliveryLongitude  Float
+  deliveryOtp        String?
+  placedAt           DateTime      @default(now())
+
+  customer   User        @relation(fields: [customerId], references: [id])
+  merchant   Merchant    @relation(fields: [merchantId], references: [id])
+  courier    Courier?    @relation(fields: [courierId], references: [id])
+  orderItems OrderItem[]
+}
+
+model OrderItem {
+  id              String   @id @default(uuid())
+  orderId         String
+  menuItemId      String
+  quantity        Int
+  unitPriceCents  BigInt
+  totalPriceCents BigInt
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem        MenuItem @relation(fields: [menuItemId], references: [id])
+}

@@ -1,0 +1,7 @@
+node_modules/
+dist/apk/
+android/build/
+*.tgz
+.env*
+.DS_Store
+Thumbs.db

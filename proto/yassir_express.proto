@@ -1,0 +1,198 @@
+syntax = "proto3";
+
+package yassir.express.v1;
+
+option go_package = "github.com/yassir/express/v1;expressv1";
+
+// ============================================================================
+// 1. TELEMETRY & LOCATION SERVICE
+// ============================================================================
+service TelemetryService {
+  rpc StreamLocation (stream LocationPing) returns (StreamLocationAck);
+  rpc GetCourierLocation (GetCourierLocationRequest) returns (CourierLocationResponse);
+}
+
+message LocationPing {
+  string courier_id = 1;
+  double latitude = 2;
+  double longitude = 3;
+  float speed_mps = 4;
+  float heading_deg = 5;
+  float accuracy_meters = 6;
+  int64 timestamp_epoch_ms = 7;
+  int32 battery_percentage = 8;
+}
+
+message StreamLocationAck {
+  bool success = 1;
+  int64 server_time_ms = 2;
+}
+
+message GetCourierLocationRequest {
+  string courier_id = 1;
+}
+
+message CourierLocationResponse {
+  string courier_id = 1;
+  double latitude = 2;
+  double longitude = 3;
+  int64 last_seen_epoch_ms = 4;
+  string h3_index_res9 = 5;
+}
+
+// ============================================================================
+// 2. DISPATCH & MATCHING SERVICE
+// ============================================================================
+service DispatchService {
+  rpc MatchCourierForOrder (MatchCourierRequest) returns (MatchCourierResponse);
+  rpc RespondToOrderOffer (RespondToOrderOfferRequest) returns (RespondToOrderOfferResponse);
+}
+
+message MatchCourierRequest {
+  string order_id = 1;
+  double pickup_latitude = 2;
+  double pickup_longitude = 3;
+  double dropoff_latitude = 4;
+  double dropoff_longitude = 5;
+  int32 estimated_prep_time_minutes = 6;
+  int64 order_placed_timestamp_ms = 7;
+}
+
+message MatchCourierResponse {
+  bool candidate_found = 1;
+  string courier_id = 2;
+  int32 eta_to_merchant_seconds = 3;
+  int32 offer_timeout_seconds = 4;
+}
+
+message RespondToOrderOfferRequest {
+  string courier_id = 1;
+  string order_id = 2;
+  bool accepted = 3;
+}
+
+message RespondToOrderOfferResponse {
+  bool assignment_confirmed = 1;
+  string message = 2;
+}
+
+// ============================================================================
+// 3. ORDER SERVICE
+// ============================================================================
+service OrderService {
+  rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
+  rpc GetOrderStatus (GetOrderStatusRequest) returns (OrderStatusResponse);
+  rpc UpdateKitchenStatus (UpdateKitchenStatusRequest) returns (UpdateKitchenStatusResponse);
+}
+
+enum OrderState {
+  ORDER_STATE_UNSPECIFIED = 0;
+  SUBMITTED = 1;
+  RESTAURANT_ACCEPTED = 2;
+  PREPARING = 3;
+  READY_FOR_PICKUP = 4;
+  COURIER_ASSIGNED = 5;
+  COURIER_AT_RESTAURANT = 6;
+  PICKED_UP = 7;
+  IN_TRANSIT = 8;
+  COURIER_AT_CUSTOMER = 9;
+  DELIVERED = 10;
+  CANCELLED = 11;
+  REJECTED = 12;
+}
+
+message CreateOrderRequest {
+  string customer_id = 1;
+  string merchant_id = 2;
+  repeated OrderItemRequest items = 3;
+  double delivery_latitude = 4;
+  double delivery_longitude = 5;
+  string delivery_address = 6;
+  string payment_method = 7; // CASH_ON_DELIVERY, YASSIR_PAY
+}
+
+message OrderItemRequest {
+  string menu_item_id = 1;
+  int32 quantity = 2;
+}
+
+message CreateOrderResponse {
+  string order_id = 1;
+  OrderState state = 2;
+  int64 total_cents = 3;
+  string currency = 4;
+  string delivery_otp = 5;
+}
+
+message GetOrderStatusRequest {
+  string order_id = 1;
+}
+
+message OrderStatusResponse {
+  string order_id = 1;
+  OrderState state = 2;
+  string merchant_name = 3;
+  string courier_name = 4;
+  double courier_latitude = 5;
+  double courier_longitude = 6;
+  int32 estimated_delivery_minutes = 7;
+}
+
+message UpdateKitchenStatusRequest {
+  string order_id = 1;
+  string merchant_id = 2;
+  bool accept = 3;
+  int32 prep_time_minutes = 4;
+  string rejection_reason = 5;
+}
+
+message UpdateKitchenStatusResponse {
+  bool success = 1;
+  OrderState current_state = 2;
+}
+
+// ============================================================================
+// 4. FINTECH & CASH-ON-DELIVERY (COD) LEDGER SERVICE
+// ============================================================================
+service LedgerService {
+  rpc RecordOrderDelivery (RecordOrderDeliveryRequest) returns (RecordOrderDeliveryResponse);
+  rpc GetCourierDebtStatus (GetCourierDebtStatusRequest) returns (CourierDebtStatusResponse);
+  rpc ProcessCashDeposit (ProcessCashDepositRequest) returns (ProcessCashDepositResponse);
+}
+
+message RecordOrderDeliveryRequest {
+  string order_id = 1;
+  string courier_id = 2;
+  int64 items_subtotal_cents = 3;
+  int64 delivery_fee_cents = 4;
+  string payment_method = 5;
+}
+
+message RecordOrderDeliveryResponse {
+  bool recorded = 1;
+  int64 new_courier_cash_debt_cents = 2;
+  bool blocked_from_dispatch = 3;
+}
+
+message GetCourierDebtStatusRequest {
+  string courier_id = 1;
+}
+
+message CourierDebtStatusResponse {
+  string courier_id = 1;
+  int64 cash_debt_cents = 2;
+  int64 max_debt_limit_cents = 3;
+  bool can_accept_orders = 4;
+}
+
+message ProcessCashDepositRequest {
+  string courier_id = 1;
+  int64 deposit_amount_cents = 2;
+  string agency_name = 3; // "Algérie Poste", "Yassir Hub Hydra", etc.
+  string deposit_reference = 4;
+}
+
+message ProcessCashDepositResponse {
+  bool success = 1;
+  int64 remaining_debt_cents = 2;
+}

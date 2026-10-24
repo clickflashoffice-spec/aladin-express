@@ -1,0 +1,25 @@
+{
+  "name": "aladin-express",
+  "version": "1.0.0",
+  "description": "Production-grade Aladin Express Delivery Ecosystem (Consumer, Courier, Merchant, Dispatch & SMT/COD Ledger)",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/index.ts",
+    "simulate": "ts-node src/simulator/run-simulation.ts",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.18.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/express": "^5.0.0",
+    "@types/ws": "^8.5.13",
+    "@types/cors": "^2.8.17",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}

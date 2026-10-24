@@ -1,0 +1,170 @@
+openapi: 3.1.0
+info:
+  title: Yassir Express Public & Partner API
+  description: Reverse-engineered OpenAPI 3.1 contract for Yassir Express (Customer, Merchant, Courier & Dispatch)
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local Core Gateway
+  - url: https://api.yassir.io/api/v1
+    description: Production Edge Gateway
+
+paths:
+  /health:
+    get:
+      summary: Gateway Health Check
+      responses:
+        '200':
+          description: OK
+
+  /customer/restaurants:
+    get:
+      summary: Browse nearby restaurants
+      tags: [Customer Super-App]
+      responses:
+        '200':
+          description: List of open restaurants
+
+  /customer/restaurants/{id}/menu:
+    get:
+      summary: Get restaurant menu and pricing
+      tags: [Customer Super-App]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Restaurant menu hierarchy
+
+  /customer/orders:
+    post:
+      summary: Submit a new delivery order
+      tags: [Customer Super-App]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [merchantId, items, deliveryLocation]
+              properties:
+                customerId: { type: string }
+                customerName: { type: string }
+                merchantId: { type: string }
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      menuItemId: { type: string }
+                      quantity: { type: integer }
+                deliveryLocation:
+                  type: object
+                  properties:
+                    latitude: { type: number }
+                    longitude: { type: number }
+                deliveryAddress: { type: string }
+                paymentMethod: { type: string, enum: [CASH_ON_DELIVERY, YASSIR_PAY, CIB_EDAHABIA] }
+      responses:
+        '201':
+          description: Order created
+
+  /merchant/orders/{id}/accept:
+    post:
+      summary: Kitchen accepts order and sets preparation duration
+      tags: [Merchant KDS Tablet]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [merchantId, prepTimeMinutes]
+              properties:
+                merchantId: { type: string }
+                prepTimeMinutes: { type: integer }
+      responses:
+        '200':
+          description: Order accepted
+
+  /courier/location:
+    post:
+      summary: Telemetry ping ingestion (every 2-5 seconds)
+      tags: [Courier Fleet App]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [courierId, latitude, longitude]
+              properties:
+                courierId: { type: string }
+                latitude: { type: number }
+                longitude: { type: number }
+                speedMps: { type: number }
+                headingDeg: { type: number }
+      responses:
+        '200':
+          description: Telemetry acknowledged
+
+  /courier/offers/{offerId}/accept:
+    post:
+      summary: Courier accepts dispatch offer (within 20s window)
+      tags: [Courier Fleet App]
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Assignment confirmed
+
+  /courier/orders/{orderId}/deliver:
+    post:
+      summary: Confirm handover with secret customer OTP and collect cash
+      tags: [Courier Fleet App]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [courierId, otp]
+              properties:
+                courierId: { type: string }
+                otp: { type: string }
+      responses:
+        '200':
+          description: Order delivered and settled in double-entry ledger
+
+  /courier/{id}/wallet:
+    get:
+      summary: Check courier cash-in-hand liability against 15,000 DZD threshold
+      tags: [Fintech & Escrow]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Wallet debt status
