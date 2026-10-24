@@ -16,7 +16,18 @@
   - Size: 3,801,806 bytes (~3.71 MB)
   - Signatures: Verified v2 & v3 schemes (2048-bit RSA key)
   - Target: Android 7.0+ (API 24 to API 36)
-- **Deployment & Cloud**:
+- **Live WebApps & Ecosystem Routes**:
+  - **4-in-1 Master Simulator**: [https://aladinexpress.vercel.app](https://aladinexpress.vercel.app)
+  - **Merchant Partner Portal**: [https://aladinexpress.vercel.app/partner](https://aladinexpress.vercel.app/partner)
+  - **Kitchen Display System (KDS)**: [https://aladinexpress.vercel.app/kitchen](https://aladinexpress.vercel.app/kitchen)
+  - **APK Download & Barcode Scan Station**: [https://aladinexpress.vercel.app/download](https://aladinexpress.vercel.app/download)
+  - **Direct Android APK Binary**: [https://aladinexpress.vercel.app/download/aladin-express.apk](https://aladinexpress.vercel.app/download/aladin-express.apk)
+  - **GitHub Release v1.0.0 Mirror**: [https://github.com/clickflashoffice-spec/aladin-express/releases/tag/v1.0.0](https://github.com/clickflashoffice-spec/aladin-express/releases/tag/v1.0.0)
+- **Barcodes & QR Assets Generated**:
+  - High-Res APK Download QR PNG: [`public/apk-qr-download.png`](file:///c:/Users/alamo/Downloads/delivery/public/apk-qr-download.png)
+  - Scalable Vector QR SVG: [`public/apk-qr-download.svg`](file:///c:/Users/alamo/Downloads/delivery/public/apk-qr-download.svg)
+  - Code-128 Linear Barcode SVG: [`public/apk-barcode.svg`](file:///c:/Users/alamo/Downloads/delivery/public/apk-barcode.svg)
+  - Interactive barcode scan modal embedded in all webapp navigation headers.
   - **Live Production URL**: [https://aladinexpress.vercel.app](https://aladinexpress.vercel.app) (HTTP 200 OK)
   - **Secondary Production Alias**: [https://delivery-rho-lemon.vercel.app](https://delivery-rho-lemon.vercel.app)
   - **Health Endpoint**: [https://aladinexpress.vercel.app/api/v1/health](https://aladinexpress.vercel.app/api/v1/health)
