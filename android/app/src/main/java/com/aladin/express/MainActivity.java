@@ -31,8 +31,8 @@ public class MainActivity extends Activity {
     private boolean mHasLoadedSuccessfully = false;
 
     // Production Cloud URL (Vercel) & Embedded Offline Fallback
-    public static final String CLOUD_URL = "https://aladinexpress.vercel.app/";
-    public static final String OFFLINE_URL = "file:///android_asset/index.html";
+    public static final String CLOUD_URL = "https://aladinexpress.vercel.app/app";
+    public static final String OFFLINE_URL = "file:///android_asset/app.html";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

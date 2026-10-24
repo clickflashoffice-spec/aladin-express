@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Download Aladin Express Android APK - Official Release</title>
+  <title>Download Aladin Express & Driver Android APKs - Official Distribution Station</title>
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
   <style>
     :root {
       --primary: #047857;
       --primary-hover: #065F46;
-      --accent: #F59E0B;
+      --driver-color: #F59E0B;
+      --driver-hover: #D97706;
       --bg: #0B0F19;
       --surface: #151D2F;
       --surface-border: #232E45;
@@ -45,18 +46,18 @@
       font-size: 1.25rem;
       font-weight: 800;
     }
-    .logo-container h1 span { color: var(--accent); }
+    .logo-container h1 span { color: var(--driver-color); }
 
     .nav-links {
       display: flex;
-      gap: 12px;
+      gap: 10px;
     }
     .nav-links a {
       color: var(--text-muted);
       text-decoration: none;
-      font-size: 0.88rem;
+      font-size: 0.85rem;
       font-weight: 600;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 6px;
       border: 1px solid transparent;
       transition: all 0.2s;
@@ -73,15 +74,15 @@
 
     main {
       flex: 1;
-      max-width: 1080px;
+      max-width: 1120px;
       margin: 0 auto;
-      padding: 40px 20px;
+      padding: 36px 20px 60px;
       width: 100%;
     }
 
     .hero {
       text-align: center;
-      margin-bottom: 40px;
+      margin-bottom: 36px;
     }
     .badge {
       display: inline-block;
@@ -92,30 +93,63 @@
       font-weight: 700;
       padding: 4px 12px;
       border-radius: 20px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
     .hero h2 {
-      font-size: 2.4rem;
+      font-size: 2.3rem;
       font-weight: 800;
       line-height: 1.2;
       margin-bottom: 12px;
     }
     .hero p {
       color: var(--text-muted);
-      font-size: 1.1rem;
-      max-width: 650px;
+      font-size: 1.05rem;
+      max-width: 700px;
       margin: 0 auto;
     }
 
+    /* Tab Switcher */
+    .app-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    .tab-btn {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--text-muted);
+      padding: 10px 22px;
+      border-radius: 30px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .tab-btn.active.consumer-tab {
+      background: rgba(4, 120, 87, 0.18);
+      border-color: var(--primary);
+      color: #34D399;
+    }
+    .tab-btn.active.driver-tab {
+      background: rgba(245, 158, 11, 0.18);
+      border-color: var(--driver-color);
+      color: var(--driver-color);
+    }
+
+    /* Grid for Downloads */
     .download-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 30px;
-      margin-bottom: 50px;
+      gap: 24px;
+      margin-bottom: 40px;
     }
-    @media (max-width: 768px) {
+    @media (max-width: 860px) {
       .download-grid { grid-template-columns: 1fr; }
     }
 
@@ -123,32 +157,40 @@
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: 16px;
-      padding: 30px;
+      padding: 28px;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
+      position: relative;
+    }
+    .card.highlight-green {
+      border-top: 4px solid var(--primary);
+    }
+    .card.highlight-amber {
+      border-top: 4px solid var(--driver-color);
     }
 
     .qr-frame {
       background: #FFFFFF;
-      padding: 16px;
-      border-radius: 16px;
-      margin-bottom: 20px;
+      padding: 14px;
+      border-radius: 14px;
+      margin-bottom: 18px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       display: inline-block;
     }
     .qr-frame img {
-      width: 240px;
-      height: 240px;
+      width: 210px;
+      height: 210px;
       display: block;
     }
 
     .barcode-frame {
       background: #FFFFFF;
-      padding: 12px;
-      border-radius: 12px;
-      margin-top: 15px;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       width: 100%;
       max-width: 320px;
     }
@@ -158,74 +200,139 @@
       display: block;
     }
 
+    .card h3 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .card p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      margin-bottom: 16px;
+      max-width: 340px;
+    }
+
     .btn-download {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 8px;
       background: var(--primary);
       color: #fff;
-      font-size: 1.1rem;
-      font-weight: 700;
-      padding: 14px 28px;
-      border-radius: 12px;
       text-decoration: none;
-      transition: background 0.2s, transform 0.1s;
+      font-weight: 700;
+      padding: 12px 24px;
+      border-radius: 10px;
       width: 100%;
-      max-width: 320px;
-      margin-top: 16px;
-      box-shadow: 0 4px 15px rgba(4, 120, 87, 0.4);
+      max-width: 280px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(4, 120, 87, 0.4);
     }
     .btn-download:hover {
       background: var(--primary-hover);
-      transform: translateY(-2px);
+      transform: translateY(-1px);
+    }
+    .btn-download.amber {
+      background: var(--driver-color);
+      color: #000;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+    }
+    .btn-download.amber:hover {
+      background: var(--driver-hover);
     }
 
-    .spec-table {
-      width: 100%;
-      text-align: left;
-      font-size: 0.9rem;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-    .spec-table tr {
-      border-bottom: 1px solid var(--surface-border);
-    }
-    .spec-table td {
-      padding: 10px 6px;
-    }
-    .spec-table td:first-child {
+    .apk-meta {
+      margin-top: 14px;
+      font-size: 0.78rem;
       color: var(--text-muted);
-      font-weight: 600;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
-    .spec-table td:last-child {
-      text-align: right;
-      font-family: monospace;
-      color: #F8FAFC;
+    .apk-meta span {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--surface-border);
     }
 
-    .install-steps {
+    /* Live Emulator Verification Proof */
+    .emulator-section {
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: 16px;
-      padding: 30px;
+      padding: 30px 24px;
+      margin-bottom: 40px;
     }
-    .install-steps h3 {
-      font-size: 1.3rem;
-      margin-bottom: 20px;
+    .emulator-section h3 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 6px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
-    .step-list {
+    .emulator-section p.sub {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+    .emulator-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .emulator-grid { grid-template-columns: 1fr; }
+    }
+    .emulator-card {
+      background: #0B0F19;
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .emulator-card h4 {
+      font-size: 1rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .emulator-card p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .emulator-preview-img {
+      width: 100%;
+      max-height: 480px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid #1E293B;
+      background: #000;
+    }
+
+    /* Install Instructions */
+    .instructions {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 16px;
+      padding: 32px;
+    }
+    .instructions h3 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+    }
+    .steps {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 20px;
     }
     @media (max-width: 768px) {
-      .step-list { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; }
     }
-    .step-item {
+    .step {
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--surface-border);
       border-radius: 12px;
@@ -234,28 +341,29 @@
     .step-num {
       width: 32px;
       height: 32px;
-      border-radius: 50%;
       background: var(--primary);
       color: #fff;
+      font-weight: 800;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 800;
       margin-bottom: 12px;
     }
-    .step-item h4 {
+    .step h4 {
       font-size: 1rem;
-      margin-bottom: 8px;
+      font-weight: 700;
+      margin-bottom: 6px;
     }
-    .step-item p {
+    .step p {
       font-size: 0.85rem;
       color: var(--text-muted);
-      line-height: 1.5;
+      line-height: 1.4;
     }
 
     footer {
       border-top: 1px solid var(--surface-border);
-      padding: 20px;
+      padding: 24px;
       text-align: center;
       color: var(--text-muted);
       font-size: 0.85rem;
@@ -266,132 +374,123 @@
 
   <header>
     <a href="/" class="logo-container">
-      <img src="/logo.png" alt="Aladin Express Logo">
-      <h1>Aladin <span>Express</span></h1>
+      <img src="/logo.png" alt="Aladin Express">
+      <h1>ALADIN <span>EXPRESS</span></h1>
     </a>
     <nav class="nav-links">
-      <a href="/">4-in-1 Simulator</a>
-      <a href="/partner">Partner WebApp</a>
-      <a href="/kitchen">Kitchen KDS</a>
-      <a href="/download" class="active btn-primary">📱 Download APK</a>
+      <a href="/app">📱 Client Mobile</a>
+      <a href="/driver">🛵 Chauffeur App</a>
+      <a href="/partner">🏪 Partenaire</a>
+      <a href="/kitchen">🍳 Cuisine KDS</a>
+      <a href="/download" class="active btn-primary">📥 Télécharger APK</a>
     </nav>
   </header>
 
   <main>
     <div class="hero">
-      <div class="badge">Official Android Release v1.0.0</div>
-      <h2>Scan Barcode & Install Aladin Express</h2>
-      <p>Instant on-demand food, grocery & express parcel delivery across Algeria 🇩🇿 and Tunisia 🇹🇳 with integrated SMT, Flouci & COD payment support.</p>
+      <div class="badge">Officiel & Vérifié V1.0.0</div>
+      <h2>Téléchargez les Applications Mobiles Android</h2>
+      <p>Scannez le QR code ou le code-barres avec l'appareil photo de votre smartphone pour télécharger et installer directement les APKs signés cryptographiquement.</p>
     </div>
 
+    <!-- Dual App Selection Grid -->
     <div class="download-grid">
-      <!-- Left: QR Code & Mobile Scan -->
-      <div class="card">
-        <h3 style="margin-bottom: 15px; font-size: 1.15rem;">📷 Point Phone Camera to Download</h3>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
-          Scan this barcode directly with your Android camera or QR scanner:
-        </p>
-
+      
+      <!-- Card 1: Consumer App -->
+      <div class="card highlight-green">
         <div class="qr-frame">
-          <img id="qr-img" src="/apk-qr-download.png" alt="Scan QR Code to Download APK">
+          <img src="/apk-qr-download.png" alt="Scannez pour télécharger Aladin Express Client">
         </div>
-
         <div class="barcode-frame">
-          <img src="/apk-barcode.svg" alt="Code 128 Linear Barcode">
+          <img src="/apk-barcode.svg" alt="Code-barres Aladin Express Client">
         </div>
-
-        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px;">
-          Barcode Payload: <code id="download-url-code" style="color: var(--accent);">https://aladinexpress.vercel.app/download/aladin-express.apk</code>
-        </p>
+        <h3>Aladin Express (Client)</h3>
+        <p>Application consommateur : commande en ligne de repas, courses Express 30min, paiement SMT/Flouci/D17 et suivi GPS en direct.</p>
+        <a href="/download/aladin-express.apk" class="btn-download" download>
+          <span>📥 Télécharger APK Client</span>
+        </a>
+        <div class="apk-meta">
+          <span>Taille : ~4.9 Mo</span>
+          <span>Version : 1.0.0</span>
+          <span>Package : com.aladin.express</span>
+          <span>Android 7.0+ (API 24 à 36)</span>
+        </div>
+        <div style="margin-top: 12px;">
+          <a href="/app" style="color: #34D399; font-size: 0.85rem; font-weight: 700; text-decoration: none;">➔ Ouvrir la WebApp Client</a>
+        </div>
       </div>
 
-      <!-- Right: Direct Download & Architecture Specs -->
-      <div class="card">
-        <h3 style="margin-bottom: 15px; font-size: 1.15rem;">⚡ Direct Device Download</h3>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
-          Click below to download the cryptographically signed release package directly to this browser:
-        </p>
-
-        <a href="/download/aladin-express.apk" class="btn-download" download="aladin-express.apk">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          Download APK (3.71 MB)
+      <!-- Card 2: Driver App -->
+      <div class="card highlight-amber">
+        <div class="qr-frame">
+          <img src="/apk-qr-driver.png" alt="Scannez pour télécharger Aladin Driver">
+        </div>
+        <div class="barcode-frame">
+          <img src="/driver-barcode.svg" alt="Code-barres Aladin Driver Coursier">
+        </div>
+        <h3>Aladin Driver (Coursier & Chauffeur)</h3>
+        <p>Application partenaire dédiée : bascule en service, carrousel d'offres de dispatch avec bip sonore 20s, guidage GPS, validation de livraison par code OTP et gestion du cash en main.</p>
+        <a href="/download/aladin-driver.apk" class="btn-download amber" download>
+          <span>🛵 Télécharger APK Driver</span>
         </a>
+        <div class="apk-meta">
+          <span>Taille : ~65 Ko</span>
+          <span>Version : 1.0.0</span>
+          <span>Package : com.aladin.driver</span>
+          <span>Android 7.0+ (API 24 à 36)</span>
+        </div>
+        <div style="margin-top: 12px;">
+          <a href="/driver" style="color: #F59E0B; font-size: 0.85rem; font-weight: 700; text-decoration: none;">➔ Ouvrir la WebApp Chauffeur</a>
+        </div>
+      </div>
 
-        <a href="https://github.com/clickflashoffice-spec/aladin-express/releases" target="_blank" style="color: var(--text-muted); font-size: 0.8rem; margin-top: 10px; text-decoration: underline;">
-          GitHub Releases Mirror
-        </a>
+    </div>
 
-        <table class="spec-table">
-          <tr>
-            <td>Package ID</td>
-            <td>com.aladin.express</td>
-          </tr>
-          <tr>
-            <td>Version / Build</td>
-            <td>1.0.0 (Release)</td>
-          </tr>
-          <tr>
-            <td>Binary Size</td>
-            <td>3,801,806 bytes (~3.71 MB)</td>
-          </tr>
-          <tr>
-            <td>Target Architecture</td>
-            <td>arm64-v8a, armeabi-v7a, x86_64</td>
-          </tr>
-          <tr>
-            <td>Compatibility</td>
-            <td>Android 7.0+ (API 24 to 36)</td>
-          </tr>
-          <tr>
-            <td>Signing Scheme</td>
-            <td>APK Signature Scheme v2 + v3 (RSA-2048)</td>
-          </tr>
-          <tr>
-            <td>Security Verification</td>
-            <td><span style="color: var(--success);">✓ Cryptographically Signed</span></td>
-          </tr>
-        </table>
+    <!-- Live Android Virtual Device Proof -->
+    <div class="emulator-section">
+      <h3>📱 Preuve d'Exécution sur Émulateur Android Réel (API 36)</h3>
+      <p class="sub">Les deux fichiers APK ont été déployés, installés et vérifiés sur une machine virtuelle Pixel AVD (Android 15/16). Aucun écran noir, WebView accéléré avec fallback hors-ligne automatique.</p>
+      
+      <div class="emulator-grid">
+        <div class="emulator-card">
+          <h4 style="color: #34D399;">Aladin Express (Application Client)</h4>
+          <p>Package : com.aladin.express • Rendu écran direct</p>
+          <img src="/emulator-consumer.png" alt="Capture écran Client" class="emulator-preview-img">
+        </div>
+        <div class="emulator-card">
+          <h4 style="color: #F59E0B;">Aladin Driver (Application Partenaire)</h4>
+          <p>Package : com.aladin.driver • Rendu écran direct</p>
+          <img src="/emulator-driver.png" alt="Capture écran Chauffeur" class="emulator-preview-img">
+        </div>
       </div>
     </div>
 
-    <!-- Installation Instructions -->
-    <div class="install-steps">
-      <h3>🚀 Quick Installation Guide for Android</h3>
-      <div class="step-list">
-        <div class="step-item">
+    <!-- Installation Steps -->
+    <div class="instructions">
+      <h3>Instructions d'Installation Rapide</h3>
+      <div class="steps">
+        <div class="step">
           <div class="step-num">1</div>
-          <h4>Download File</h4>
-          <p>Scan the QR code or tap Download. Chrome will prompt that the file might be harmful because it's installed outside Google Play; tap <strong>"Download anyway"</strong>.</p>
+          <h4>Scanner ou Télécharger</h4>
+          <p>Scannez le QR code ci-dessus avec votre smartphone ou cliquez directement sur le bouton de téléchargement pour obtenir le fichier <code>.apk</code>.</p>
         </div>
-        <div class="step-item">
+        <div class="step">
           <div class="step-num">2</div>
-          <h4>Allow Unknown Apps</h4>
-          <p>Tap the completed download notification. If prompted with <em>"Install unknown apps"</em>, toggle <strong>"Allow from this source"</strong> in Android Settings.</p>
+          <h4>Autoriser les Sources Inconnues</h4>
+          <p>Si votre navigateur Android demande une confirmation de sécurité, activez <em>"Autoriser l'installation à partir de cette source"</em> dans les paramètres.</p>
         </div>
-        <div class="step-item">
+        <div class="step">
           <div class="step-num">3</div>
-          <h4>Launch & Order</h4>
-          <p>Tap <strong>"Install"</strong>, then <strong>"Open"</strong>. Select your country (Algeria 🇩🇿 or Tunisia 🇹🇳) to start ordering with live GPS tracking!</p>
+          <h4>Lancer et Utiliser</h4>
+          <p>Ouvrez le fichier APK téléchargé pour l'installer. L'icône Aladin apparaîtra sur votre écran d'accueil avec support hors-ligne immédiat.</p>
         </div>
       </div>
     </div>
   </main>
 
   <footer>
-    &copy; 2026 Aladin Express Inc. North Africa Delivery & Fintech Platform. All Rights Reserved.
+    <p>&copy; 2026 Aladin Technologies Inc. - Écosystème de Livraison & Paiement Tunisie / Algérie. Tous droits réservés.</p>
   </footer>
 
-  <script>
-    // Dynamically update download link and QR payload if running on custom host
-    window.onload = () => {
-      const origin = window.location.origin;
-      const downloadLink = `${origin}/download/aladin-express.apk`;
-      document.getElementById('download-url-code').innerText = downloadLink;
-    };
-  </script>
 </body>
 </html>

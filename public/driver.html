@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Aladin Driver - Application Chauffeur & Coursier</title>
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --primary: #F59E0B; /* Aladin Driver Amber/Gold */
+      --primary-hover: #D97706;
+      --driver-green: #10B981;
+      --driver-red: #EF4444;
+      --bg: #0B0F19;
+      --surface: #151D2F;
+      --surface-border: #232E45;
+      --text: #F1F5F9;
+      --text-muted: #94A3B8;
+      --card-bg: #1A2438;
+      --tunisia-red: #E70013;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Top Bar */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+    }
+    .driver-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .driver-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #F59E0B, #B45309);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #000;
+      border: 2px solid #F59E0B;
+    }
+    .driver-info h1 {
+      font-size: 0.95rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .driver-info p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .rating-badge {
+      background: rgba(245, 158, 11, 0.2);
+      color: #F59E0B;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .country-badge {
+      background: #1E293B;
+      color: #fff;
+      border: 1px solid var(--surface-border);
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 5px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    /* Main Container */
+    .app-viewport {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Map container */
+    #map {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      background: #101622;
+      z-index: 1;
+    }
+
+    /* Top Floating Status & Shift Toggle */
+    .shift-bar {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      z-index: 50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(21, 29, 47, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--surface-border);
+      border-radius: 16px;
+      padding: 10px 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pulse-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--driver-green);
+      box-shadow: 0 0 12px var(--driver-green);
+      animation: pulse 1.8s infinite;
+    }
+    .pulse-dot.offline {
+      background: #64748B;
+      box-shadow: none;
+      animation: none;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.7; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.7; }
+    }
+    .status-text {
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .toggle-btn {
+      border: none;
+      padding: 8px 18px;
+      border-radius: 24px;
+      font-weight: 800;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .toggle-btn.online {
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+    }
+    .toggle-btn.offline {
+      background: #334155;
+      color: #94A3B8;
+    }
+
+    /* Floating Stats Bar */
+    .driver-stats-pill {
+      position: absolute;
+      top: 76px;
+      left: 14px;
+      right: 14px;
+      z-index: 50;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      padding: 8px 12px;
+      text-align: center;
+    }
+    .stat-col h4 {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .stat-col p {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .stat-col p.highlight {
+      color: var(--primary);
+    }
+
+    /* Bottom Mission Panel / Floating Sheet */
+    .mission-sheet {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--surface-border);
+      border-radius: 20px 20px 0 0;
+      padding: 16px 20px 24px;
+      z-index: 60;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sheet-handle {
+      width: 40px;
+      height: 4px;
+      background: #334155;
+      border-radius: 2px;
+      margin: 0 auto 12px;
+    }
+
+    /* Idle Radar State */
+    .idle-radar {
+      text-align: center;
+      padding: 10px 0;
+    }
+    .radar-icon {
+      font-size: 2.5rem;
+      margin-bottom: 8px;
+      animation: spin-radar 3s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin-radar {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .idle-radar h3 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .idle-radar p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .debt-warning-bar {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      color: var(--accent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Active Mission Steps */
+    .active-mission {
+      display: none;
+    }
+    .mission-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--surface-border);
+    }
+    .mission-id {
+      font-size: 0.75rem;
+      font-family: monospace;
+      color: var(--text-muted);
+    }
+    .mission-payout {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: var(--primary);
+    }
+
+    /* Step Timeline */
+    .step-tracker {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      position: relative;
+    }
+    .step-tracker::before {
+      content: '';
+      position: absolute;
+      top: 14px;
+      left: 20px;
+      right: 20px;
+      height: 2px;
+      background: #334155;
+      z-index: 1;
+    }
+    .step-progress-bar {
+      position: absolute;
+      top: 14px;
+      left: 20px;
+      height: 2px;
+      background: var(--primary);
+      z-index: 2;
+      transition: width 0.3s;
+      width: 0%;
+    }
+    .step-node {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .node-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 2px solid #334155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .step-node.active .node-circle {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #000;
+    }
+    .step-node.done .node-circle {
+      border-color: var(--driver-green);
+      background: var(--driver-green);
+      color: #fff;
+    }
+    .node-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    /* Mission Target Card */
+    .target-card {
+      background: var(--card-bg);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+    .target-type {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .target-name {
+      font-size: 1rem;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+    .target-address {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .target-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 0.75rem;
+      color: #CBD5E1;
+      padding-top: 6px;
+      border-top: 1px dashed var(--surface-border);
+    }
+
+    /* Action Buttons */
+    .btn-action {
+      width: 100%;
+      background: linear-gradient(135deg, #F59E0B, #D97706);
+      color: #000;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35);
+      transition: all 0.2s;
+    }
+    .btn-action:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+    .btn-sub-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .btn-secondary {
+      flex: 1;
+      background: #1E293B;
+      color: #fff;
+      border: 1px solid var(--surface-border);
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    /* Incoming Offer Modal with Countdown */
+    .offer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .offer-modal {
+      background: var(--surface);
+      border: 2px solid var(--primary);
+      border-radius: 20px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 50px rgba(245, 158, 11, 0.3);
+      position: relative;
+      animation: modal-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modal-pop {
+      0% { transform: scale(0.9); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .countdown-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: #334155;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .countdown-bar {
+      height: 100%;
+      width: 100%;
+      background: var(--primary);
+      transition: width 1s linear;
+    }
+    .offer-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 4px;
+      color: #fff;
+    }
+    .offer-subtitle {
+      font-size: 0.8rem;
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .offer-payout-box {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--primary);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .payout-amt {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--primary);
+    }
+    .payout-lbl {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .offer-locations {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .loc-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .loc-icon {
+      font-size: 1rem;
+      margin-top: 2px;
+    }
+    .loc-details h5 {
+      font-size: 0.85rem;
+      font-weight: 800;
+    }
+    .loc-details p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .offer-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-reject {
+      flex: 1;
+      background: #334155;
+      color: #94A3B8;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+    .btn-accept {
+      flex: 2;
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 0.92rem;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Handover OTP Dialog */
+    .otp-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 210;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .otp-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 20px;
+      padding: 22px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+    .otp-inputs {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .otp-digit {
+      width: 50px;
+      height: 58px;
+      background: #1E293B;
+      border: 2px solid var(--surface-border);
+      border-radius: 10px;
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: #fff;
+      text-align: center;
+    }
+    .otp-digit:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #25334D;
+    }
+    .cod-collect-box {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--driver-red);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #F87171;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top App Bar -->
+  <header>
+    <div class="driver-profile">
+      <div class="driver-avatar">🛵</div>
+      <div class="driver-info">
+        <h1>Aladin Driver <span class="rating-badge">★ 4.96</span></h1>
+        <p id="driverVehicle">Scooter Yamaha • TN-214-998</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <select id="countrySelect" class="country-badge" onchange="switchCountry(this.value)">
+        <option value="TN" selected>🇹🇳 Tunisie</option>
+        <option value="DZ">🇩🇿 Algérie</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- Main Viewport -->
+  <div class="app-viewport">
+    
+    <!-- Top Shift Bar with Toggle -->
+    <div class="shift-bar">
+      <div class="status-indicator">
+        <div id="pulseDot" class="pulse-dot"></div>
+        <span id="shiftStatusText" class="status-text" style="color: var(--driver-green);">EN SERVICE</span>
+      </div>
+      <button id="shiftToggleBtn" class="toggle-btn online" onclick="toggleShift()">
+        <span>🟢 Actif</span>
+      </button>
+    </div>
+
+    <!-- Shift Daily Stats -->
+    <div class="driver-stats-pill">
+      <div class="stat-col">
+        <h4>Gains du jour</h4>
+        <p id="todayEarnings" class="highlight">48.500 DT</p>
+      </div>
+      <div class="stat-col">
+        <h4>Courses</h4>
+        <p id="todayDeliveries">7 livrées</p>
+      </div>
+      <div class="stat-col">
+        <h4>Cash en main</h4>
+        <p id="cashDebt">124.500 DT</p>
+      </div>
+    </div>
+
+    <!-- Map Canvas -->
+    <div id="map"></div>
+
+    <!-- Bottom Mission Sheet -->
+    <div class="mission-sheet">
+      <div class="sheet-handle"></div>
+
+      <!-- State A: Idle Radar Search -->
+      <div id="idleState" class="idle-radar">
+        <div class="radar-icon">📡</div>
+        <h3>En attente de commandes...</h3>
+        <p>Positionné au Lac 2. L'algorithme Aladin vous attribue les restaurants les plus proches.</p>
+        <div class="debt-warning-bar">
+          <span>⚠️ Plafond de dette : <strong id="debtCeiling">124.500 / 400.000 DT</strong></span>
+          <span style="text-decoration: underline; cursor: pointer;" onclick="alert('Rendez-vous dans un bureau de poste D17 ou point Flouci pour régulariser.')">Régulariser</span>
+        </div>
+      </div>
+
+      <!-- State B: Active Mission Progress -->
+      <div id="activeState" class="active-mission">
+        <div class="mission-header">
+          <div>
+            <div id="activeMissionId" class="mission-id">COMMANDE #AL-9842</div>
+            <div id="activeMissionTime" style="font-size: 0.75rem; color: var(--text-muted);">Assigné il y a 2 min</div>
+          </div>
+          <div id="activeMissionPayout" class="mission-payout">+5.800 DT</div>
+        </div>
+
+        <!-- 4 Step Tracker -->
+        <div class="step-tracker">
+          <div id="stepProgressBar" class="step-progress-bar"></div>
+          <div id="stepNode1" class="step-node active">
+            <div class="node-circle">1</div>
+            <span class="node-label">Restaurant</span>
+          </div>
+          <div id="stepNode2" class="step-node">
+            <div class="node-circle">2</div>
+            <span class="node-label">Récupérer</span>
+          </div>
+          <div id="stepNode3" class="step-node">
+            <div class="node-circle">3</div>
+            <span class="node-label">En route</span>
+          </div>
+          <div id="stepNode4" class="step-node">
+            <div class="node-circle">4</div>
+            <span class="node-label">Client</span>
+          </div>
+        </div>
+
+        <!-- Target Destination Card -->
+        <div class="target-card">
+          <div id="targetType" class="target-type">Étape 1 : Se rendre au restaurant</div>
+          <div id="targetName" class="target-name">Chili's Lac 2</div>
+          <div id="targetAddress" class="target-address">Rue du Lac Malaren, Les Berges du Lac 2, Tunis</div>
+          <div class="target-meta">
+            <span id="targetDistance">📍 1.2 km</span>
+            <span id="targetEta">⏱️ ~4 min</span>
+            <span id="targetItems">🛍️ 2 articles (Sac scellé)</span>
+          </div>
+        </div>
+
+        <!-- Mission Action Button -->
+        <button id="missionActionBtn" class="btn-action" onclick="advanceMissionStep()">
+          <span>JE SUIS ARRIVÉ AU RESTAURANT</span> ➔
+        </button>
+        <div class="btn-sub-actions">
+          <a id="callTargetBtn" href="tel:+21671000000" class="btn-secondary">📞 Appeler contact</a>
+          <button class="btn-secondary" onclick="openGpsNav()">🧭 Navigation GPS</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Incoming Offer Modal -->
+  <div id="offerModal" class="offer-overlay">
+    <div class="offer-modal">
+      <div class="countdown-bar-wrap">
+        <div id="offerCountdownBar" class="countdown-bar"></div>
+      </div>
+      <div class="offer-title">⚡ NOUVELLE MISSION DISPONIBLE</div>
+      <div class="offer-subtitle">Course express attribuée par l'algorithme Aladin</div>
+
+      <div class="offer-payout-box">
+        <div id="offerPayout" class="payout-amt">+6.200 DT</div>
+        <div class="payout-lbl">Gain garanti (Course + Pourboire)</div>
+      </div>
+
+      <div class="offer-locations">
+        <div class="loc-row">
+          <div class="loc-icon">🍳</div>
+          <div class="loc-details">
+            <h5 id="offerRestaurantName">Plan B Fast Food</h5>
+            <p id="offerRestaurantAddr">Ennasr 2, Tunis (1.4 km de vous)</p>
+          </div>
+        </div>
+        <div class="loc-row">
+          <div class="loc-icon">📍</div>
+          <div class="loc-details">
+            <h5 id="offerCustomerArea">Menzah 9</h5>
+            <p id="offerDeliveryAddr">Avenue Hédi Nouira, Tunis (3.8 km)</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="offer-buttons">
+        <button class="btn-reject" onclick="rejectOffer()">Refuser</button>
+        <button class="btn-accept" onclick="acceptOffer()">ACCEPTER (20s)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Handover Verification OTP Dialog -->
+  <div id="otpModal" class="otp-overlay">
+    <div class="otp-card">
+      <div style="font-size: 2.2rem; margin-bottom: 8px;">🔐</div>
+      <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 4px;">Remise de la commande</h3>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Demandez au client son code de sécurité Aladin à 4 chiffres.</p>
+      
+      <div id="codNotice" class="cod-collect-box">
+        💵 ENCAISSEMENT ESPÈCES : 38.500 DT
+      </div>
+
+      <div class="otp-inputs">
+        <input type="text" maxlength="1" class="otp-digit" id="otp1" oninput="onOtpInput(1)" />
+        <input type="text" maxlength="1" class="otp-digit" id="otp2" oninput="onOtpInput(2)" />
+        <input type="text" maxlength="1" class="otp-digit" id="otp3" oninput="onOtpInput(3)" />
+        <input type="text" maxlength="1" class="otp-digit" id="otp4" oninput="onOtpInput(4)" />
+      </div>
+
+      <button class="btn-action" style="margin-top: 10px;" onclick="verifyHandoverOtp()">
+        VALIDER LA LIVRAISON & ENCAISSER
+      </button>
+      <button class="btn-secondary" style="width: 100%; margin-top: 8px;" onclick="closeOtpModal()">Annuler</button>
+    </div>
+  </div>
+
+  <script>
+    // Audio Chime using Web Audio API
+    function playOfferChime() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.6);
+      } catch (e) {
+        console.log('Audio chime not supported without user interaction');
+      }
+    }
+
+    // State Variables
+    let currentCountry = 'TN';
+    let isOnline = true;
+    let map = null;
+    let driverMarker = null;
+    let pickupMarker = null;
+    let dropoffMarker = null;
+    let routeLine = null;
+    let missionStep = 0; // 0=idle, 1=to restaurant, 2=at restaurant, 3=to client, 4=at client
+    let offerTimer = null;
+    let countdownInterval = null;
+
+    // Currency Formatter
+    function formatCurrency(amount) {
+      if (currentCountry === 'TN') return amount.toFixed(3) + ' DT';
+      return (amount * 45).toFixed(0) + ' DZD';
+    }
+
+    function switchCountry(code) {
+      currentCountry = code;
+      if (code === 'TN') {
+        document.getElementById('todayEarnings').innerText = '48.500 DT';
+        document.getElementById('cashDebt').innerText = '124.500 DT';
+        document.getElementById('debtCeiling').innerText = '124.500 / 400.000 DT';
+        initMap(36.8392, 10.2444); // Tunis Lac 2
+      } else {
+        document.getElementById('todayEarnings').innerText = '2,400 DZD';
+        document.getElementById('cashDebt').innerText = '6,200 DZD';
+        document.getElementById('debtCeiling').innerText = '6,200 / 15,000 DZD';
+        initMap(36.7538, 3.0588); // Alger Hydra
+      }
+    }
+
+    // Initialize Map with dark CartoDB tiles
+    function initMap(lat, lng) {
+      if (!map) {
+        map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19,
+          attribution: '© OpenStreetMap © CARTO'
+        }).addTo(map);
+
+        // Driver Marker
+        const scooterIcon = L.divIcon({
+          html: `<div style="background:#F59E0B; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 0 15px rgba(245,158,11,0.8); border:2px solid #fff; font-size:18px;">🛵</div>`,
+          className: 'driver-pin',
+          iconSize: [36, 36],
+          iconAnchor: [18, 18]
+        });
+        driverMarker = L.marker([lat, lng], { icon: scooterIcon }).addTo(map);
+      } else {
+        map.setView([lat, lng], 15);
+        driverMarker.setLatLng([lat, lng]);
+      }
+    }
+
+    // Toggle Online / Offline Shift
+    function toggleShift() {
+      isOnline = !isOnline;
+      const dot = document.getElementById('pulseDot');
+      const text = document.getElementById('shiftStatusText');
+      const btn = document.getElementById('shiftToggleBtn');
+
+      if (isOnline) {
+        dot.className = 'pulse-dot';
+        text.innerText = 'EN SERVICE';
+        text.style.color = 'var(--driver-green)';
+        btn.className = 'toggle-btn online';
+        btn.innerHTML = '<span>🟢 Actif</span>';
+        // Auto trigger offer after 4 seconds
+        setTimeout(() => {
+          if (missionStep === 0 && isOnline) triggerNewOffer();
+        }, 3000);
+      } else {
+        dot.className = 'pulse-dot offline';
+        text.innerText = 'HORS LIGNE';
+        text.style.color = '#94A3B8';
+        btn.className = 'toggle-btn offline';
+        btn.innerHTML = '<span>⚪ Pause</span>';
+      }
+    }
+
+    // Trigger Incoming Offer Modal
+    function triggerNewOffer() {
+      playOfferChime();
+      const modal = document.getElementById('offerModal');
+      const bar = document.getElementById('offerCountdownBar');
+      modal.style.display = 'flex';
+      bar.style.width = '100%';
+
+      let secondsLeft = 20;
+      clearInterval(countdownInterval);
+      countdownInterval = setInterval(() => {
+        secondsLeft--;
+        bar.style.width = (secondsLeft / 20 * 100) + '%';
+        if (secondsLeft <= 0) {
+          clearInterval(countdownInterval);
+          rejectOffer();
+        }
+      }, 1000);
+    }
+
+    function rejectOffer() {
+      clearInterval(countdownInterval);
+      document.getElementById('offerModal').style.display = 'none';
+    }
+
+    function acceptOffer() {
+      clearInterval(countdownInterval);
+      document.getElementById('offerModal').style.display = 'none';
+      startMission();
+    }
+
+    // Start Mission Lifecycle
+    function startMission() {
+      missionStep = 1;
+      document.getElementById('idleState').style.display = 'none';
+      document.getElementById('activeState').style.display = 'block';
+
+      const dLat = driverMarker.getLatLng().lat;
+      const dLng = driverMarker.getLatLng().lng;
+      const pLat = dLat + 0.006;
+      const pLng = dLng + 0.005;
+
+      // Add pickup marker
+      if (pickupMarker) map.removeLayer(pickupMarker);
+      const restIcon = L.divIcon({
+        html: `<div style="background:#047857; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 0 12px rgba(4,120,87,0.7); border:2px solid #fff; font-size:16px;">🍳</div>`,
+        className: 'rest-pin',
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
+      });
+      pickupMarker = L.marker([pLat, pLng], { icon: restIcon }).addTo(map);
+
+      // Draw trajectory line
+      if (routeLine) map.removeLayer(routeLine);
+      routeLine = L.polyline([[dLat, dLng], [pLat, pLng]], {
+        color: '#F59E0B',
+        weight: 5,
+        dashArray: '6, 8',
+        opacity: 0.8
+      }).addTo(map);
+
+      map.fitBounds([[dLat, dLng], [pLat, pLng]], { padding: [60, 60] });
+      updateMissionStepUI();
+    }
+
+    function updateMissionStepUI() {
+      const step1 = document.getElementById('stepNode1');
+      const step2 = document.getElementById('stepNode2');
+      const step3 = document.getElementById('stepNode3');
+      const step4 = document.getElementById('stepNode4');
+      const progressBar = document.getElementById('stepProgressBar');
+      const actionBtn = document.getElementById('missionActionBtn');
+
+      if (missionStep === 1) {
+        progressBar.style.width = '0%';
+        step1.className = 'step-node active';
+        step2.className = 'step-node';
+        step3.className = 'step-node';
+        step4.className = 'step-node';
+        document.getElementById('targetType').innerText = 'Étape 1 : Se rendre au restaurant';
+        document.getElementById('targetName').innerText = "Chili's Lac 2";
+        document.getElementById('targetAddress').innerText = "Rue du Lac Malaren, Les Berges du Lac 2";
+        actionBtn.innerHTML = '<span>JE SUIS ARRIVÉ AU RESTAURANT</span> ➔';
+      } else if (missionStep === 2) {
+        progressBar.style.width = '33%';
+        step1.className = 'step-node done';
+        step2.className = 'step-node active';
+        document.getElementById('targetType').innerText = 'Étape 2 : Récupération & Vérification sac';
+        document.getElementById('targetName').innerText = "Vérifier le sac scellé #AL-9842";
+        document.getElementById('targetAddress').innerText = "Présentez ce numéro au comptoir de la cuisine";
+        actionBtn.innerHTML = '<span>COMMANDE RÉCUPÉRÉE & SCELLÉE</span> ➔';
+      } else if (missionStep === 3) {
+        progressBar.style.width = '66%';
+        step1.className = 'step-node done';
+        step2.className = 'step-node done';
+        step3.className = 'step-node active';
+        document.getElementById('targetType').innerText = 'Étape 3 : Se rendre chez le client';
+        document.getElementById('targetName').innerText = "Amine Jaziri (Appt 4B, Résidence Cyrine)";
+        document.getElementById('targetAddress').innerText = "Rue du Lac Windermere, Lac 1, Tunis";
+        actionBtn.innerHTML = '<span>JE SUIS ARRIVÉ CHEZ LE CLIENT</span> ➔';
+      } else if (missionStep === 4) {
+        progressBar.style.width = '100%';
+        step1.className = 'step-node done';
+        step2.className = 'step-node done';
+        step3.className = 'step-node done';
+        step4.className = 'step-node active';
+        document.getElementById('targetType').innerText = 'Étape 4 : Remise client & Code OTP';
+        document.getElementById('targetName').innerText = "Code de validation client requis";
+        document.getElementById('targetAddress').innerText = "Sonnez à l'interphone 4B ou appelez le client";
+        actionBtn.innerHTML = '<span>SAISIR LE CODE OTP CLIENT</span> 🔐';
+      }
+    }
+
+    function advanceMissionStep() {
+      if (missionStep === 1) {
+        // Arrived at restaurant: move scooter marker to restaurant
+        const pos = pickupMarker.getLatLng();
+        driverMarker.setLatLng(pos);
+        missionStep = 2;
+        updateMissionStepUI();
+      } else if (missionStep === 2) {
+        // Picked up order, route to customer
+        const dLat = driverMarker.getLatLng().lat;
+        const dLng = driverMarker.getLatLng().lng;
+        const cLat = dLat - 0.008;
+        const cLng = dLng - 0.006;
+
+        if (dropoffMarker) map.removeLayer(dropoffMarker);
+        const custIcon = L.divIcon({
+          html: `<div style="background:#3B82F6; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 0 12px rgba(59,130,246,0.7); border:2px solid #fff; font-size:16px;">🏠</div>`,
+          className: 'cust-pin',
+          iconSize: [34, 34],
+          iconAnchor: [17, 17]
+        });
+        dropoffMarker = L.marker([cLat, cLng], { icon: custIcon }).addTo(map);
+
+        if (routeLine) map.removeLayer(routeLine);
+        routeLine = L.polyline([[dLat, dLng], [cLat, cLng]], {
+          color: '#10B981',
+          weight: 5,
+          dashArray: '6, 8',
+          opacity: 0.8
+        }).addTo(map);
+
+        map.fitBounds([[dLat, dLng], [cLat, cLng]], { padding: [60, 60] });
+        missionStep = 3;
+        updateMissionStepUI();
+      } else if (missionStep === 3) {
+        // Arrived at client
+        const pos = dropoffMarker.getLatLng();
+        driverMarker.setLatLng(pos);
+        missionStep = 4;
+        updateMissionStepUI();
+      } else if (missionStep === 4) {
+        // Open OTP Handover modal
+        document.getElementById('otpModal').style.display = 'flex';
+        document.getElementById('otp1').focus();
+      }
+    }
+
+    // OTP Input logic
+    function onOtpInput(index) {
+      const current = document.getElementById('otp' + index);
+      if (current.value && index < 4) {
+        document.getElementById('otp' + (index + 1)).focus();
+      }
+    }
+
+    function closeOtpModal() {
+      document.getElementById('otpModal').style.display = 'none';
+    }
+
+    function verifyHandoverOtp() {
+      const code = document.getElementById('otp1').value +
+                   document.getElementById('otp2').value +
+                   document.getElementById('otp3').value +
+                   document.getElementById('otp4').value;
+
+      if (code.length < 4) {
+        alert('Veuillez saisir les 4 chiffres du code client.');
+        return;
+      }
+
+      // Success
+      alert('🎉 MISSION VALIDÉE AVEC SUCCÈS !\n\n+5.800 DT crédités sur votre compte chauffeur.\nEspèces collectées : 38.500 DT.');
+      closeOtpModal();
+
+      // Reset markers & return to idle
+      if (pickupMarker) map.removeLayer(pickupMarker);
+      if (dropoffMarker) map.removeLayer(dropoffMarker);
+      if (routeLine) map.removeLayer(routeLine);
+
+      missionStep = 0;
+      document.getElementById('idleState').style.display = 'block';
+      document.getElementById('activeState').style.display = 'none';
+      document.getElementById('todayEarnings').innerText = '54.300 DT';
+      document.getElementById('todayDeliveries').innerText = '8 livrées';
+      document.getElementById('cashDebt').innerText = '163.000 DT';
+      document.getElementById('debtCeiling').innerText = '163.000 / 400.000 DT';
+    }
+
+    function openGpsNav() {
+      const lat = driverMarker.getLatLng().lat;
+      const lng = driverMarker.getLatLng().lng;
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+    }
+
+    // Bootstrap
+    window.addEventListener('DOMContentLoaded', () => {
+      initMap(36.8392, 10.2444); // Tunis Lac 2
+      // Trigger a sample dispatch offer after 2 seconds
+      setTimeout(() => {
+        if (missionStep === 0 && isOnline) triggerNewOffer();
+      }, 2500);
+    });
+  </script>
+</body>
+</html>

@@ -56,6 +56,26 @@ export function createApp(): Express {
     }
   });
 
+  // Dedicated Customer Mobile WebApp
+  app.get('/app', (_req: Request, res: Response) => {
+    const appPath = path.join(publicDir, 'app.html');
+    if (fs.existsSync(appPath)) {
+      res.sendFile(appPath);
+    } else {
+      res.redirect('/');
+    }
+  });
+
+  // Dedicated Driver & Courier Partner Portal WebApp
+  app.get('/driver', (_req: Request, res: Response) => {
+    const driverPath = path.join(publicDir, 'driver.html');
+    if (fs.existsSync(driverPath)) {
+      res.sendFile(driverPath);
+    } else {
+      res.redirect('/');
+    }
+  });
+
   // Dedicated Partner Portal WebApp
   app.get('/partner', (_req: Request, res: Response) => {
     const partnerPath = path.join(publicDir, 'partner.html');
@@ -86,18 +106,37 @@ export function createApp(): Express {
     }
   });
 
-  // Direct APK Binary Download Endpoint (with proper APK MIME type & headers)
+  // Direct Consumer APK Binary Download Endpoint
   app.get(['/download/aladin-express.apk', '/aladin-express.apk'], (_req: Request, res: Response) => {
     const apkPath = fs.existsSync(path.join(publicDir, 'download', 'aladin-express.apk'))
       ? path.join(publicDir, 'download', 'aladin-express.apk')
-      : path.join(process.cwd(), 'dist/apk/AladinExpress-v1.0.0-release.apk');
+      : (fs.existsSync(path.join(publicDir, 'aladin-express.apk'))
+          ? path.join(publicDir, 'aladin-express.apk')
+          : path.join(process.cwd(), 'dist/apk/AladinExpress-v1.0.0-release.apk'));
 
     if (fs.existsSync(apkPath)) {
       res.setHeader('Content-Type', 'application/vnd.android.package-archive');
       res.setHeader('Content-Disposition', 'attachment; filename="aladin-express.apk"');
       res.sendFile(apkPath);
     } else {
-      res.status(404).json({ error: 'APK file not found on server' });
+      res.status(404).json({ error: 'Consumer APK file not found on server' });
+    }
+  });
+
+  // Direct Driver APK Binary Download Endpoint
+  app.get(['/download/aladin-driver.apk', '/aladin-driver.apk'], (_req: Request, res: Response) => {
+    const apkPath = fs.existsSync(path.join(publicDir, 'download', 'aladin-driver.apk'))
+      ? path.join(publicDir, 'download', 'aladin-driver.apk')
+      : (fs.existsSync(path.join(publicDir, 'aladin-driver.apk'))
+          ? path.join(publicDir, 'aladin-driver.apk')
+          : path.join(process.cwd(), 'dist/apk/AladinDriver-v1.0.0-release.apk'));
+
+    if (fs.existsSync(apkPath)) {
+      res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+      res.setHeader('Content-Disposition', 'attachment; filename="aladin-driver.apk"');
+      res.sendFile(apkPath);
+    } else {
+      res.status(404).json({ error: 'Driver APK file not found on server' });
     }
   });
 

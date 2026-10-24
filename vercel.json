@@ -1,6 +1,35 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
   "rewrites": [
+    {
+      "source": "/app",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/driver",
+      "destination": "/driver.html"
+    },
+    {
+      "source": "/partner",
+      "destination": "/partner.html"
+    },
+    {
+      "source": "/kitchen",
+      "destination": "/kitchen.html"
+    },
+    {
+      "source": "/download",
+      "destination": "/download.html"
+    },
+    {
+      "source": "/download/aladin-express.apk",
+      "destination": "/download/aladin-express.apk"
+    },
+    {
+      "source": "/download/aladin-driver.apk",
+      "destination": "/download/aladin-driver.apk"
+    },
     {
       "source": "/api/(.*)",
       "destination": "/api/index.ts"

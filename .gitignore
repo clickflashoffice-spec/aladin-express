@@ -1,6 +1,7 @@
 node_modules/
 dist/apk/
 android/build/
+android-driver/build/
 *.tgz
 .env*
 .DS_Store
