@@ -7,7 +7,7 @@
     "build": "tsc",
     "start": "ts-node src/index.ts",
     "simulate": "ts-node src/simulator/run-simulation.ts",
-    "test": "node --test"
+    "test": "ts-node tests/ecosystem.test.ts"
   },
   "dependencies": {
     "express": "^4.21.2",
