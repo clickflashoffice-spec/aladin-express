@@ -23,6 +23,7 @@ Remove-Item -Recurse -Force $genDir, $classesDir, $dexDir -ErrorAction SilentlyC
 New-Item -ItemType Directory -Force -Path $buildDir, $genDir, $classesDir, $dexDir, $outDir | Out-Null
 
 $resDir = "c:\Users\alamo\Downloads\delivery\android\app\src\main\res"
+$assetsDir = "c:\Users\alamo\Downloads\delivery\android\app\src\main\assets"
 $manifest = "c:\Users\alamo\Downloads\delivery\android\app\src\main\AndroidManifest.xml"
 $srcDir = "c:\Users\alamo\Downloads\delivery\android\app\src\main\java"
 
@@ -32,11 +33,11 @@ $compiledRes = "$buildDir\compiled_res.zip"
 Remove-Item $compiledRes -Force -ErrorAction SilentlyContinue
 & "$buildTools\aapt2.exe" compile --dir $resDir -o $compiledRes
 
-# Step 2: Link resources and produce R.java + base APK
-Write-Host "[2/7] Linking resources and generating R.java..." -ForegroundColor Yellow
+# Step 2: Link resources and produce R.java + base APK with embedded offline assets
+Write-Host "[2/7] Linking resources, assets, and generating R.java..." -ForegroundColor Yellow
 $unalignedApk = "$buildDir\app-base.apk"
 Remove-Item $unalignedApk -Force -ErrorAction SilentlyContinue
-& "$buildTools\aapt2.exe" link -I $androidJar $compiledRes --manifest $manifest --java $genDir -o $unalignedApk --auto-add-overlay
+& "$buildTools\aapt2.exe" link -I $androidJar $compiledRes -A $assetsDir --manifest $manifest --java $genDir -o $unalignedApk --auto-add-overlay
 
 # Step 3: Compile Java sources
 Write-Host "[3/7] Compiling Java sources with javac..." -ForegroundColor Yellow
@@ -82,6 +83,11 @@ Write-Host "`nVerifying APK cryptographic signature:" -ForegroundColor Cyan
 & "$buildTools\apksigner.bat" verify --verbose $finalApk
 
 $apkInfo = Get-Item $finalApk
+
+# Synchronize final signed APK to web download directories
+Copy-Item $finalApk "c:\Users\alamo\Downloads\delivery\public\download\aladin-express.apk" -Force
+Copy-Item $finalApk "c:\Users\alamo\Downloads\delivery\public\aladin-express.apk" -Force
+Write-Host "Synchronized APK to public web download stations." -ForegroundColor Cyan
 Write-Host "`n============================================================" -ForegroundColor Green
 Write-Host "🎉 ALADIN EXPRESS ANDROID APK BUILT & SIGNED SUCCESSFULLY!" -ForegroundColor Green
 Write-Host "Path:   $($apkInfo.FullName)" -ForegroundColor Green

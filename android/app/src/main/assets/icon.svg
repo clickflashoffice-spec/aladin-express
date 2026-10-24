@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064E3B" />
+      <stop offset="50%" stop-color="#047857" />
+      <stop offset="100%" stop-color="#022C22" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Tile with Rounded Squircle Border -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bgGrad)" stroke="#10B981" stroke-width="4" filter="url(#shadow)" />
+
+  <g transform="translate(60, 60) scale(0.76)">
+    <!-- Magic Lamp Base -->
+    <path d="M 120 360 C 180 360, 200 400, 260 400 C 320 400, 340 360, 400 360 C 420 360, 430 370, 430 385 C 430 400, 350 435, 260 435 C 170 435, 90 400, 90 385 C 90 370, 100 360, 120 360 Z" fill="url(#gold)" filter="url(#shadow)" />
+    
+    <!-- Lamp Vessel Body -->
+    <path d="M 160 280 Q 260 240 360 280 Q 400 320 340 360 Q 260 370 180 360 Q 120 320 160 280 Z" fill="url(#gold)" />
+    
+    <!-- Handle -->
+    <path d="M 140 300 C 60 270, 60 370, 130 355" fill="none" stroke="url(#gold)" stroke-width="20" stroke-linecap="round" />
+    
+    <!-- Spout -->
+    <path d="M 350 290 Q 410 260 440 220" fill="none" stroke="url(#gold)" stroke-width="20" stroke-linecap="round" />
+    
+    <!-- Lightning Bolt Jet Flash (Express Delivery Speed) -->
+    <polygon points="410,70 330,200 395,200 310,330 470,165 395,165" fill="#FEF08A" filter="url(#glow)" />
+    <polygon points="415,80 345,190 400,190 330,300 450,175 395,175" fill="url(#gold)" />
+  </g>
+</svg>
