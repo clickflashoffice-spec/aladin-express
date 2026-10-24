@@ -1,5 +1,5 @@
-import { createEcosystemServer } from '../src/index';
+import { createApp } from '../src/index';
 
-const { app } = createEcosystemServer();
+const app = createApp();
 
 export default app;

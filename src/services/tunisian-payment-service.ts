@@ -4,7 +4,7 @@
 // Handles 3-decimal TND currency arithmetic (1 TND = 1,000 Millimes)
 // ==============================================================================
 
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 export enum TunisianPaymentGateway {
   SMT_CLICTOPAY = 'SMT_CLICTOPAY',       // Société Monétique Tunisie (Cards)

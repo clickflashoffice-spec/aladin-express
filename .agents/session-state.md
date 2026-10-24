@@ -1,23 +1,26 @@
-# Session State: Yassir Express Reverse Engineering & Production Ecosystem
+# Session State: Aladin Express Production Ecosystem & Deployment
 
-## Status: 100% COMPLETE (ALGERIA & TUNISIA MULTI-REGION + E-PAYMENTS)
+## Status: 100% COMPLETE & DEPLOYED (GOAL COMPLETE)
 
-- **Tunisian e-Payment Architecture Active**:
-  - Implementation: [`src/services/tunisian-payment-service.ts`](file:///c:/Users/alamo/Downloads/delivery/src/services/tunisian-payment-service.ts)
-  - API Routes: [`src/api/tunisian-payment-routes.ts`](file:///c:/Users/alamo/Downloads/delivery/src/api/tunisian-payment-routes.ts)
-  - Supported Gateways:
-    1. **SMT (ClicToPay)**: Société Monétique Tunisie 3DS2 Card Gateway with HMAC-SHA256 IPN verification
-    2. **Flouci Mobile Wallet**: Instant QR & deep-link (`flouci://pay`) mobile payment by Kaoun
-    3. **e-Dinar / D17**: La Poste Tunisienne national mobile payment integration
-    4. **Konnect**: Multi-channel Tunisian gateway
-  - Precision: Strict 3-decimal millimes arithmetic ($1 \text{ TND} = 1,000 \text{ Millimes}$)
-  - Non-COD Digital Ledger Routing: Courier cash liability remains 0 when order is paid digitally via SMT/Flouci
-- **Regional Deployment**:
-  - 🇩🇿 **Algeria**: Algiers (DZD), SATIM CIB & Edahabia, 15,000 DZD COD Limit
-  - 🇹🇳 **Tunisia**: Tunis (TND Millimes), SMT ClicToPay, Flouci, e-Dinar, 400 TND COD Limit
-- **Testing & Verification**:
-  - [`tests/ecosystem.test.ts`](file:///c:/Users/alamo/Downloads/delivery/tests/ecosystem.test.ts): 6/6 Passing Suites
-- **Android APK**:
-  - [`dist/apk/YassirExpress-v1.0.0-release.apk`](file:///c:/Users/alamo/Downloads/delivery/dist/apk/YassirExpress-v1.0.0-release.apk) (Signed & verified)
-- **Live Simulator**:
-  - `http://localhost:8080/` with interactive Country switcher (🇩🇿 Algeria / 🇹🇳 Tunisia), real-time SMT/Flouci authorization, and Tunis Leaflet map
+- **Rebranding**: 
+  - Complete rebrand to **Aladin Express** (`com.aladin.express`)
+  - Typography: "ALADIN EXPRESS: Instant On-Demand Delivery"
+  - Palette: Royal Emerald Green (`#047857`), Warm Golden Amber (`#F59E0B`), Deep Navy (`#0B0F19`)
+- **Branding Assets**:
+  - Image AI Generated App Icon: [`public/logo.png`](file:///c:/Users/alamo/Downloads/delivery/public/logo.png) & [`public/icon.png`](file:///c:/Users/alamo/Downloads/delivery/public/icon.png)
+  - Vector SVG Logo: [`public/logo.svg`](file:///c:/Users/alamo/Downloads/delivery/public/logo.svg) & [`public/icon.svg`](file:///c:/Users/alamo/Downloads/delivery/public/icon.svg)
+  - Android App Launcher Mipmaps: `mipmap-hdpi`, `mipmap-xhdpi`, `mipmap-xxhdpi`, `drawable/logo.png`
+- **Signed Android Release APK**:
+  - Path: [`dist/apk/AladinExpress-v1.0.0-release.apk`](file:///c:/Users/alamo/Downloads/delivery/dist/apk/AladinExpress-v1.0.0-release.apk)
+  - Package: `com.aladin.express`
+  - Size: 3,801,806 bytes (~3.71 MB)
+  - Signatures: Verified v2 & v3 schemes (2048-bit RSA key)
+  - Target: Android 7.0+ (API 24 to API 36)
+- **Deployment & Cloud**:
+  - GitHub Repository: [https://github.com/clickflashoffice-spec/aladin-express](https://github.com/clickflashoffice-spec/aladin-express)
+  - 1-Click Vercel Deploy: [https://vercel.com/new/clone?repository-url=https://github.com/clickflashoffice-spec/aladin-express](https://vercel.com/new/clone?repository-url=https://github.com/clickflashoffice-spec/aladin-express)
+  - Serverless Handler: [`api/index.ts`](file:///c:/Users/alamo/Downloads/delivery/api/index.ts)
+  - Configuration: [`vercel.json`](file:///c:/Users/alamo/Downloads/delivery/vercel.json)
+  - CI/CD Pipeline: [`.github/workflows/ci.yml`](file:///c:/Users/alamo/Downloads/delivery/.github/workflows/ci.yml)
+- **Automated Tests**:
+  - `npm test`: 6/6 tests passing (Ledger invariants, COD debt ceiling, dispatch delay, FSM OTP, dark store wave picking, and Tunisian e-payments).

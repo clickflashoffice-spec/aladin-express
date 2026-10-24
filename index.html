@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aladin Express - North Africa Multi-Region & e-Payment Delivery Platform</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --primary: #E52E2E;
+      --primary-hover: #C52222;
+      --bg: #0B0F19;
+      --surface: #151D2F;
+      --surface-border: #232E45;
+      --text: #F1F5F9;
+      --text-muted: #94A3B8;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --accent: #3B82F6;
+      --tunisia-red: #E70013;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Top Nav */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 56px;
+    }
+    .logo-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-badge h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo-badge h1 span { color: var(--primary); }
+    .region-select {
+      background: #1E293B;
+      color: #F8FAFC;
+      border: 1px solid #334155;
+      font-weight: 700;
+      border-radius: 6px;
+      padding: 4px 10px;
+    }
+    .header-metrics {
+      display: flex;
+      gap: 12px;
+      font-size: 0.8rem;
+    }
+    .metric-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--surface-border);
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+    .metric-pill strong { color: var(--success); }
+
+    /* 4-Quadrant Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 12px;
+      padding: 12px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .pane {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .pane-header {
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid var(--surface-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pane-header h2 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pane-body {
+      padding: 10px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Buttons & Controls */
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    button:hover { background: var(--primary-hover); }
+    button.secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--surface-border);
+    }
+    button.secondary:hover { background: rgba(255, 255, 255, 0.12); }
+    button.success { background: var(--success); }
+    button.success:hover { background: #059669; }
+    button.tunisia { background: var(--tunisia-red); }
+    button.tunisia:hover { background: #B3000E; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    select, input {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--surface-border);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+    }
+
+    /* Cards */
+    .card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .card-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    /* Custom item row */
+    .menu-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .menu-item-row:last-child { border-bottom: none; }
+
+    /* Map container */
+    #map {
+      width: 100%;
+      height: 100%;
+      min-height: 150px;
+      border-radius: 6px;
+      background: #111;
+    }
+
+    /* Status Badges */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .badge-submitted { background: #3B82F6; color: #fff; }
+    .badge-accepted { background: #8B5CF6; color: #fff; }
+    .badge-preparing { background: #F59E0B; color: #000; }
+    .badge-assigned { background: #EC4899; color: #fff; }
+    .badge-transit { background: #06B6D4; color: #000; }
+    .badge-delivered { background: #10B981; color: #fff; }
+    .badge-digital { background: #10B981; color: #fff; border: 1px solid #34D399; }
+
+    /* Logs terminal */
+    .terminal-box {
+      background: #060911;
+      font-family: monospace;
+      font-size: 0.72rem;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid var(--surface-border);
+      max-height: 85px;
+      overflow-y: auto;
+      color: #38BDF8;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header>
+    <div class="logo-badge">
+      <img src="/logo.png" style="width:38px; height:38px; border-radius:10px; border: 1px solid #10B981; object-fit:cover;" alt="Aladin Express Logo" />
+      <h1>ALADIN <span style="color:#F59E0B">EXPRESS</span></h1>
+      <select id="region-selector" class="region-select" onchange="changeRegion()">
+        <option value="DZ">🇩🇿 Algeria (Algiers - DZD)</option>
+        <option value="TN" selected>🇹🇳 Tunisia (Tunis - TND Millimes)</option>
+      </select>
+    </div>
+    <div class="header-metrics">
+      <div class="metric-pill">Gateway: <strong id="gw-status">ONLINE (8080)</strong></div>
+      <div class="metric-pill">e-Payment Gateway: <strong id="payment-gw-status" style="color:#60A5FA">SMT & Flouci ACTIVE</strong></div>
+      <div class="metric-pill">Active Orders: <strong id="total-orders-count">0</strong></div>
+      <div class="metric-pill">Platform Revenue: <strong id="platform-revenue">0 TND</strong></div>
+    </div>
+  </header>
+
+  <!-- Main 4-Quadrant Split Grid -->
+  <main class="dashboard-grid">
+
+    <!-- 1. CUSTOMER SUPER-APP -->
+    <section class="pane" id="pane-customer">
+      <div class="pane-header">
+        <h2>📱 1. Customer App (com.yatechnologies.yassir_rider)</h2>
+        <span class="badge badge-submitted" id="customer-order-status">NO ACTIVE ORDER</span>
+      </div>
+      <div class="pane-body">
+        <div class="card">
+          <div class="card-title">Select Restaurant & Dropoff</div>
+          <select id="restaurant-select" onchange="onRestaurantChanged()" style="width: 100%; margin-bottom: 6px;"></select>
+          <input type="text" id="delivery-address" style="width: 100%;" />
+        </div>
+
+        <div class="card">
+          <div class="card-title" id="menu-card-title">Menu Items</div>
+          <div id="menu-items-container"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Select Payment Mode</div>
+          <select id="payment-method-select" style="width: 100%; font-weight: 600;">
+            <option value="SMT_CLICTOPAY">💳 SMT ClicToPay (Tunisian Domestic Cards / 3DS2)</option>
+            <option value="FLOUCI">📱 Flouci Mobile Wallet (Instant QR Pay)</option>
+            <option value="EDINAR_D17">📮 e-Dinar / D17 (La Poste Tunisienne)</option>
+            <option value="CASH_ON_DELIVERY">💵 Cash on Delivery (TND)</option>
+          </select>
+        </div>
+
+        <div class="card" style="margin-top:auto">
+          <div style="display:flex; justify-content:space-between; margin-bottom: 6px; font-size:0.82rem">
+            <span>Items: <strong id="cart-count">0</strong></span>
+            <span>Total: <strong id="cart-total" style="color:var(--success)">0 TND</strong></span>
+          </div>
+          <button id="btn-place-order" style="width: 100%; font-size: 0.9rem; padding: 8px;" onclick="placeCustomerOrder()">
+            🛒 Confirm & Place Order
+          </button>
+          
+          <!-- SMT / Flouci instant authorization simulator banner -->
+          <div id="epay-simulate-banner" style="display:none; margin-top: 6px; background: rgba(59, 130, 246, 0.15); border: 1px solid var(--accent); padding: 6px; border-radius: 6px; text-align: center;">
+            <span style="font-size:0.75rem; color:#93C5FD;">Tunisian Gateway Pending 3DS2 Authorization</span>
+            <button class="tunisia" style="width:100%; margin-top:4px;" onclick="simulateTunisianPaymentCapture()">
+              🔒 Authorize Payment (HMAC-SHA256 Webhook)
+            </button>
+          </div>
+
+          <div id="customer-otp-banner" style="display:none; margin-top: 6px; text-align: center; background: rgba(16, 185, 129, 0.15); border: 1px solid var(--success); padding: 4px; border-radius: 6px;">
+            Secret Handover OTP: <strong id="display-otp" style="font-size: 1.05rem; color: var(--success); letter-spacing: 2px;">----</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. MERCHANT KDS TABLET -->
+    <section class="pane" id="pane-merchant">
+      <div class="pane-header">
+        <h2>👨‍🍳 2. Kitchen Display KDS (com.yatechnologies.yassirfoodrestaurant)</h2>
+        <span class="tag" id="merchant-kds-tag" style="background:rgba(231,0,19,0.2); color:#FCA5A5; border:none">Tunis Kitchen</span>
+      </div>
+      <div class="pane-body">
+        <div id="no-merchant-orders" style="text-align: center; color: var(--text-muted); margin-top: 30px;">
+          Listening for incoming tickets...
+        </div>
+        <div id="merchant-order-card" class="card" style="display:none; border-left: 4px solid var(--warning);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong id="merchant-order-title">Order #---</strong>
+            <span class="badge badge-submitted" id="merchant-badge">PENDING ACCEPTANCE</span>
+          </div>
+          <div id="merchant-payment-tag" style="font-size:0.75rem; color:#60A5FA; margin-top:4px;"></div>
+          <div id="merchant-items-summary" style="font-size:0.82rem; margin: 6px 0; color: #CBD5E1;"></div>
+          <div style="display:flex; gap: 8px; margin-top: 8px;">
+            <button class="success" id="btn-merchant-accept" onclick="merchantAccept()">
+              ✓ Accept Kitchen Prep
+            </button>
+            <button class="secondary" id="btn-merchant-ready" disabled onclick="merchantMarkReady()">
+              🍲 Food Ready for Pickup
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. COURIER PARTNER MOBILE -->
+    <section class="pane" id="pane-courier">
+      <div class="pane-header">
+        <h2>🛵 3. Courier Partner (com.yatechnologies.yassirfoodpartner)</h2>
+        <select id="courier-switcher" onchange="switchCourier()" style="padding: 2px 6px;"></select>
+      </div>
+      <div class="pane-body">
+        <!-- Courier Wallet & Float Limit Gauge -->
+        <div class="card" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.3);">
+          <div class="card-title" id="wallet-title">Tunisian Cash Float (COD Escrow Ceiling)</div>
+          <div style="display:flex; justify-content:space-between; font-size:0.8rem">
+            <span>Cash in Hand: <strong id="courier-debt" style="color:var(--warning)">85.000 TND</strong></span>
+            <span>Max Ceiling: <strong id="courier-max-limit">400.000 TND</strong></span>
+          </div>
+          <div style="width: 100%; height: 6px; background: #334155; border-radius: 3px; margin: 6px 0; overflow:hidden">
+            <div id="debt-bar" style="width: 21%; height: 100%; background: var(--warning);"></div>
+          </div>
+          <button class="secondary" style="font-size: 0.75rem; padding: 3px 8px; margin-top: 2px;" onclick="depositCash()">
+            🏦 Deposit Cash at La Poste Tunisienne (-50 TND)
+          </button>
+        </div>
+
+        <!-- Incoming Dispatch Offer -->
+        <div id="courier-offer-card" class="card" style="display:none; border: 1px solid var(--primary); background: rgba(229, 46, 46, 0.08);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:var(--primary)">⚡ NEW DISPATCH OFFER</strong>
+            <span class="badge badge-assigned" id="offer-timer">20s</span>
+          </div>
+          <div style="font-size:0.82rem; margin: 6px 0;">
+            Payout Guaranteed: <strong id="offer-payout" style="color:var(--success)">2.800 TND</strong><br/>
+            Pickup: <span id="offer-restaurant-name">Cosmitto Coffee Lac 2</span>
+          </div>
+          <div style="display:flex; gap: 8px;">
+            <button class="success" style="flex:1" onclick="acceptDispatchOffer()">Accept</button>
+            <button class="secondary" style="flex:1" onclick="declineDispatchOffer()">Decline</button>
+          </div>
+        </div>
+
+        <!-- In-flight trip controls -->
+        <div id="courier-actions-card" class="card" style="display:none;">
+          <div class="card-title">Active Order Execution</div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+            <button class="secondary" id="btn-at-restaurant" onclick="courierArriveStore()">1. At Restaurant</button>
+            <button class="secondary" id="btn-picked-up" onclick="courierPickup()">2. Picked Up</button>
+            <button class="secondary" id="btn-sim-gps" onclick="courierSimulateGPS()">3. Stream GPS Transit</button>
+            <button class="success" id="btn-deliver-modal" onclick="courierOpenDeliverModal()">4. Deliver & Verify</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. DISPATCH TOWER & FINTECH LEDGER -->
+    <section class="pane" id="pane-tower">
+      <div class="pane-header">
+        <h2>🗺️ 4. Dispatch Operations Tower & Fintech Ledger</h2>
+        <span class="badge badge-delivered">LIVE MESH</span>
+      </div>
+      <div class="pane-body" style="gap: 6px;">
+        <div id="map" style="height: 175px;"></div>
+
+        <!-- Double Entry Ledger Breakdown -->
+        <div class="card" style="padding: 6px;">
+          <div class="card-title" id="ledger-title">Double-Entry Financial Ledger (Tunis Clearing - TND)</div>
+          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 4px; font-size:0.72rem; text-align:center;">
+            <div style="background:rgba(255,255,255,0.03); padding:4px; border-radius:4px;">
+              <span style="color:var(--text-muted)">Courier Cash:</span><br/>
+              <strong id="ledger-courier-cash" style="color:var(--warning)">0 TND</strong>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); padding:4px; border-radius:4px;">
+              <span style="color:var(--text-muted)">Merchant Payable:</span><br/>
+              <strong id="ledger-merchant-payable" style="color:#A78BFA">0 TND</strong>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); padding:4px; border-radius:4px;">
+              <span style="color:var(--text-muted)">Comm Revenue:</span><br/>
+              <strong id="ledger-comm" style="color:var(--success)">0 TND</strong>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); padding:4px; border-radius:4px;">
+              <span style="color:var(--text-muted)">Delivery Take:</span><br/>
+              <strong id="ledger-delivery-take" style="color:var(--accent)">0 TND</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telemetry Logs Terminal -->
+        <div class="terminal-box" id="terminal-logs">
+          [System] Aladin Express Multi-Region Gateway & SMT/Flouci Engine online.<br/>
+          [Mesh] WebSocket live channel connected on ws://localhost:8080/ws/tracking.
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    let currentRegion = 'TN'; // Default to Tunisia
+    let currentCart = [];
+    let activeOrder = null;
+    let currentOffer = null;
+    let activePaymentTx = null;
+    let currentCourierId = 'courier-tn-001';
+    let map, courierMarker, restaurantMarker, customerMarker;
+
+    const REGION_DATA = {
+      TN: {
+        currency: 'TND',
+        mapCenter: [36.8450, 10.2500],
+        couriers: [
+          { id: 'courier-tn-001', name: 'Mehdi Trabelsi (Lac 2 / Marsa)' },
+          { id: 'courier-tn-002', name: 'Fares Ben Salem (Carthage / Sidi Bou Said)' }
+        ],
+        restaurants: [
+          {
+            id: 'mch-tun-001',
+            name: 'Cosmitto Coffee Lac 2 (Les Berges du Lac)',
+            address: 'Rue de la Feuille d Érable, Lac 2',
+            coords: [36.8392, 10.2372],
+            menu: [
+              { id: 'item-tn-001', title: 'Caramel Macchiato Grande', price: 6500 },
+              { id: 'item-tn-002', title: 'Club Sandwich Poulet Fumé', price: 14500 },
+              { id: 'item-tn-003', title: 'Cheesecake Spéculoos', price: 8500 }
+            ]
+          },
+          {
+            id: 'mch-tun-002',
+            name: 'Le Golfe Restaurant La Marsa',
+            address: '5 Rue El Arbi Zarrouk, La Marsa Plage',
+            coords: [36.8782, 10.3247],
+            menu: [
+              { id: 'item-tn-004', title: 'Brik Traditionnelle au Thon', price: 6000 },
+              { id: 'item-tn-005', title: 'Couscous Royal au Mérou', price: 32000 },
+              { id: 'item-tn-006', title: 'Boga Cidre Tunisienne 33cl', price: 2500 }
+            ]
+          }
+        ],
+        deliveryAddressDefault: '14 Avenue Habib Bourguiba, La Marsa, Tunis',
+        customerCoords: [36.8750, 10.3200],
+        courierStartCoords: [36.8410, 10.2390]
+      },
+      DZ: {
+        currency: 'DZD',
+        mapCenter: [36.7450, 3.0500],
+        couriers: [
+          { id: 'courier-001', name: 'Karim Mansouri (Hydra)' },
+          { id: 'courier-002', name: 'Amine Belkacem (El Biar)' },
+          { id: 'courier-003', name: 'Yacine Djebbar (Ben Aknoun)' }
+        ],
+        restaurants: [
+          {
+            id: 'mch-alg-001',
+            name: 'Le Gourmet Burger Hydra (Algiers)',
+            address: '12 Boulevard Sidi Yahia, Hydra',
+            coords: [36.7412, 3.0425],
+            menu: [
+              { id: 'item-001', title: 'Classic Smash Burger Double', price: 95000 },
+              { id: 'item-002', title: 'Crispy Truffle Fries', price: 45000 },
+              { id: 'item-003', title: 'Selecto Algerian Soda 33cl', price: 15000 }
+            ]
+          }
+        ],
+        deliveryAddressDefault: '32 Boulevard Mohamed V, Alger Centre',
+        customerCoords: [36.7538, 3.0588],
+        courierStartCoords: [36.7430, 3.0450]
+      }
+    };
+
+    function initMap() {
+      const data = REGION_DATA[currentRegion];
+      map = L.map('map').setView(data.mapCenter, 13);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO'
+      }).addTo(map);
+
+      updateMapMarkers();
+    }
+
+    function updateMapMarkers() {
+      const data = REGION_DATA[currentRegion];
+      const rest = data.restaurants[0];
+
+      if (restaurantMarker) map.removeLayer(restaurantMarker);
+      if (customerMarker) map.removeLayer(customerMarker);
+      if (courierMarker) map.removeLayer(courierMarker);
+
+      restaurantMarker = L.marker(rest.coords).addTo(map).bindPopup(rest.name);
+      customerMarker = L.marker(data.customerCoords).addTo(map).bindPopup("Customer Dropoff");
+      courierMarker = L.circleMarker(data.courierStartCoords, {
+        color: currentRegion === 'TN' ? '#E70013' : '#E52E2E',
+        fillColor: currentRegion === 'TN' ? '#E70013' : '#E52E2E',
+        fillOpacity: 0.9,
+        radius: 8
+      }).addTo(map).bindPopup("Courier (Motorcycle)");
+
+      map.flyTo(data.mapCenter, 13);
+    }
+
+    function changeRegion() {
+      currentRegion = document.getElementById('region-selector').value;
+      currentCart = [];
+      activeOrder = null;
+      currentOffer = null;
+      activePaymentTx = null;
+
+      const data = REGION_DATA[currentRegion];
+      currentCourierId = data.couriers[0].id;
+
+      // Update UI elements
+      document.getElementById('wallet-title').innerText = `${currentRegion === 'TN' ? 'Tunisian' : 'Algerian'} Cash Float (COD Escrow Ceiling)`;
+      document.getElementById('ledger-title').innerText = `Double-Entry Financial Ledger (${currentRegion === 'TN' ? 'Tunis Clearing - TND' : 'Algiers Clearing - DZD'})`;
+      document.getElementById('merchant-kds-tag').innerText = `${currentRegion === 'TN' ? 'Tunis Kitchen' : 'Algiers Kitchen'}`;
+
+      // Populate restaurants
+      const restSelect = document.getElementById('restaurant-select');
+      restSelect.innerHTML = '';
+      for (const r of data.restaurants) {
+        restSelect.innerHTML += `<option value="${r.id}">${r.name}</option>`;
+      }
+
+      // Populate Couriers
+      const courierSelect = document.getElementById('courier-switcher');
+      courierSelect.innerHTML = '';
+      for (const c of data.couriers) {
+        courierSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+      }
+
+      // Populate payment options
+      const paySelect = document.getElementById('payment-method-select');
+      paySelect.innerHTML = '';
+      if (currentRegion === 'TN') {
+        paySelect.innerHTML = `
+          <option value="SMT_CLICTOPAY">💳 SMT ClicToPay (Tunisian Domestic Cards / 3DS2)</option>
+          <option value="FLOUCI">📱 Flouci Mobile Wallet (Instant QR Pay)</option>
+          <option value="EDINAR_D17">📮 e-Dinar / D17 (La Poste Tunisienne)</option>
+          <option value="CASH_ON_DELIVERY">💵 Cash on Delivery (TND)</option>
+        `;
+      } else {
+        paySelect.innerHTML = `
+          <option value="CASH_ON_DELIVERY">💵 Cash on Delivery (DZD)</option>
+          <option value="CIB_EDAHABIA">💳 CIB / Edahabia Card (Algeria SATIM)</option>
+          <option value="YASSIR_PAY">📱 Yassir Pay Wallet</option>
+        `;
+      }
+
+      document.getElementById('delivery-address').value = data.deliveryAddressDefault;
+      onRestaurantChanged();
+      updateMapMarkers();
+      updateCourierWallet();
+      pollLedger();
+    }
+
+    function onRestaurantChanged() {
+      currentCart = [];
+      updateCartDisplay();
+
+      const restId = document.getElementById('restaurant-select').value;
+      const data = REGION_DATA[currentRegion];
+      const rest = data.restaurants.find(r => r.id === restId) || data.restaurants[0];
+
+      document.getElementById('menu-card-title').innerText = `${rest.name} Menu`;
+      const container = document.getElementById('menu-items-container');
+      container.innerHTML = '';
+
+      for (const item of rest.menu) {
+        const priceLabel = currentRegion === 'TN' ? `${(item.price/1000).toFixed(3)} TND` : `${item.price/100} DZD`;
+        container.innerHTML += `
+          <div class="menu-item-row">
+            <div>
+              <strong>${item.title}</strong><br/>
+              <small style="color:var(--text-muted)">${priceLabel}</small>
+            </div>
+            <button onclick="addToCart('${item.id}', '${item.title}', ${item.price})">+ Add</button>
+          </div>
+        `;
+      }
+    }
+
+    function addToCart(id, title, priceMinor) {
+      currentCart.push({ menuItemId: id, title, priceMinor });
+      updateCartDisplay();
+    }
+
+    function updateCartDisplay() {
+      const isTN = currentRegion === 'TN';
+      const totalFood = currentCart.reduce((sum, item) => sum + item.priceMinor, 0);
+      const deliveryFee = totalFood > 0 ? (isTN ? 2500 : 30000) : 0;
+      const total = totalFood + deliveryFee;
+
+      document.getElementById('cart-count').innerText = currentCart.length;
+      document.getElementById('cart-total').innerText = isTN
+        ? `${(total/1000).toFixed(3)} TND`
+        : `${(total/100).toFixed(0)} DZD`;
+    }
+
+    function log(msg) {
+      const box = document.getElementById('terminal-logs');
+      box.innerHTML += `<br/>[${new Date().toLocaleTimeString()}] ${msg}`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function connectWS() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/tracking`);
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'COURIER_LOCATION_UPDATE') {
+            log(`[GPS] Courier ${data.courierId} @ ${data.location.latitude.toFixed(4)}, ${data.location.longitude.toFixed(4)}`);
+            if (courierMarker) {
+              courierMarker.setLatLng([data.location.latitude, data.location.longitude]);
+            }
+          }
+        } catch (e) {}
+      };
+    }
+
+    async function placeCustomerOrder() {
+      if (currentCart.length === 0) {
+        alert("Please add items to cart first!");
+        return;
+      }
+
+      const restId = document.getElementById('restaurant-select').value;
+      const payMethod = document.getElementById('payment-method-select').value;
+      const data = REGION_DATA[currentRegion];
+
+      const res = await fetch('/api/v1/customer/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: 'cust-tn-001',
+          customerName: 'Yassine Karray',
+          merchantId: restId,
+          items: currentCart.map(i => ({ menuItemId: i.menuItemId, quantity: 1 })),
+          deliveryLocation: { latitude: data.customerCoords[0], longitude: data.customerCoords[1] },
+          deliveryAddress: document.getElementById('delivery-address').value,
+          paymentMethod: payMethod
+        })
+      });
+
+      const resData = await res.json();
+      if (resData.success) {
+        activeOrder = resData.order;
+        log(`Order #${activeOrder.id} placed! Total: ${activeOrder.totalAmountCents / (currentRegion==='TN'?1000:100)} ${activeOrder.currency} (${payMethod})`);
+        
+        document.getElementById('customer-order-status').innerText = 'SUBMITTED';
+        document.getElementById('display-otp').innerText = activeOrder.deliveryOtp;
+        document.getElementById('customer-otp-banner').style.display = 'block';
+        document.getElementById('btn-place-order').disabled = true;
+
+        // If Tunisian digital payment, show simulation banner
+        if (payMethod !== 'CASH_ON_DELIVERY') {
+          initiateTunisianEPayment(payMethod);
+        }
+
+        showMerchantOrder(activeOrder);
+      }
+    }
+
+    async function initiateTunisianEPayment(gateway) {
+      const res = await fetch('/api/v1/payments/tunisia/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: activeOrder.id,
+          gateway: gateway,
+          customerPhone: '+21698112233'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        activePaymentTx = data;
+        log(`[e-Payment] Initiated ${gateway} Session #${data.paymentId} (${data.amountFormatted})`);
+        document.getElementById('epay-simulate-banner').style.display = 'block';
+      }
+    }
+
+    async function simulateTunisianPaymentCapture() {
+      if (!activePaymentTx) return;
+      log(`[SMT/Flouci] Sending HMAC-SHA256 authenticated callback...`);
+
+      // Compute HMAC in browser or call mock capture
+      const paymentId = activePaymentTx.paymentId;
+      const res = await fetch('/api/v1/payments/tunisia/smt/webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentId: paymentId,
+          gatewayReference: `SMT-AUTH-${Date.now()}`,
+          status: 'SUCCESS',
+          // Precomputed test signature for smt_test_secret_key_tunisia_2026
+          signature: 'smt_verified_token'
+        })
+      });
+
+      // Mock client acceptance
+      log(`✓ 3D-Secure 2.0 Card Payment Authorized! Order marked PAID_DIGITALLY.`);
+      document.getElementById('epay-simulate-banner').innerHTML = `
+        <strong style="color:var(--success)">✓ PAID DIGITALLY via ${activeOrder.paymentMethod}</strong><br/>
+        <small style="color:#94A3B8">Courier cash collection: 0 ${activeOrder.currency}</small>
+      `;
+      document.getElementById('customer-order-status').className = 'badge badge-digital';
+      document.getElementById('customer-order-status').innerText = 'PAID DIGITALLY';
+    }
+
+    function showMerchantOrder(order) {
+      document.getElementById('no-merchant-orders').style.display = 'none';
+      const card = document.getElementById('merchant-order-card');
+      card.style.display = 'block';
+      document.getElementById('merchant-order-title').innerText = `Order #${order.id.slice(-6)}`;
+      document.getElementById('merchant-payment-tag').innerText = `Payment: ${order.paymentMethod} (${order.currency})`;
+      document.getElementById('merchant-items-summary').innerText = order.items.map(i => `${i.quantity}x ${i.title}`).join(', ');
+    }
+
+    async function merchantAccept() {
+      if (!activeOrder) return;
+      const res = await fetch(`/api/v1/merchant/orders/${activeOrder.id}/accept`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantId: activeOrder.merchantId, prepTimeMinutes: 15 })
+      });
+      const data = await res.json();
+      if (data.success) {
+        log(`Merchant accepted order. Kitchen preparing.`);
+        document.getElementById('merchant-badge').innerText = 'PREPARING (15m)';
+        document.getElementById('merchant-badge').className = 'badge badge-preparing';
+        document.getElementById('btn-merchant-accept').disabled = true;
+        document.getElementById('btn-merchant-ready').disabled = false;
+
+        checkCourierOffer();
+      }
+    }
+
+    function merchantMarkReady() {
+      log(`Kitchen marked food READY FOR PICKUP.`);
+      document.getElementById('merchant-badge').innerText = 'READY FOR PICKUP';
+      document.getElementById('merchant-badge').className = 'badge badge-delivered';
+      document.getElementById('btn-merchant-ready').disabled = true;
+    }
+
+    async function checkCourierOffer() {
+      const res = await fetch('/api/v1/dispatch/offers');
+      const data = await res.json();
+      if (data.offers && data.offers.length > 0) {
+        currentOffer = data.offers[0];
+        const isTN = currentRegion === 'TN';
+        const payout = isTN ? (currentOffer.guaranteedPayoutCents/1000).toFixed(3) + ' TND' : (currentOffer.guaranteedPayoutCents/100).toFixed(0) + ' DZD';
+        log(`[Dispatch] Offer broadcasted to Courier! Payout: ${payout}`);
+        document.getElementById('courier-offer-card').style.display = 'block';
+        document.getElementById('offer-payout').innerText = payout;
+      }
+    }
+
+    async function acceptDispatchOffer() {
+      if (!currentOffer) return;
+      const res = await fetch(`/api/v1/courier/offers/${currentOffer.offerId}/accept`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        log(`Courier ACCEPTED dispatch offer.`);
+        document.getElementById('courier-offer-card').style.display = 'none';
+        document.getElementById('courier-actions-card').style.display = 'block';
+      }
+    }
+
+    function declineDispatchOffer() {
+      document.getElementById('courier-offer-card').style.display = 'none';
+    }
+
+    async function courierArriveStore() {
+      if (!activeOrder) return;
+      await fetch(`/api/v1/courier/orders/${activeOrder.id}/at-restaurant`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courierId: currentCourierId })
+      });
+      log(`Courier arrived at restaurant.`);
+      document.getElementById('btn-at-restaurant').disabled = true;
+    }
+
+    async function courierPickup() {
+      if (!activeOrder) return;
+      await fetch(`/api/v1/courier/orders/${activeOrder.id}/pickup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courierId: currentCourierId })
+      });
+      log(`Courier picked up food. In transit.`);
+      document.getElementById('btn-picked-up').disabled = true;
+    }
+
+    async function courierSimulateGPS() {
+      log(`Streaming live GPS trajectory towards dropoff location...`);
+      const isTN = currentRegion === 'TN';
+      const route = isTN
+        ? [
+            { lat: 36.8392, lon: 10.2372, speed: 30 },
+            { lat: 36.8520, lon: 10.2700, speed: 35 },
+            { lat: 36.8650, lon: 10.3000, speed: 28 },
+            { lat: 36.8750, lon: 10.3200, speed: 15 }
+          ]
+        : [
+            { lat: 36.7412, lon: 3.0425, speed: 28 },
+            { lat: 36.7460, lon: 3.0480, speed: 32 },
+            { lat: 36.7538, lon: 3.0588, speed: 10 }
+          ];
+
+      for (const pt of route) {
+        await fetch('/api/v1/courier/location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            courierId: currentCourierId,
+            latitude: pt.lat,
+            longitude: pt.lon,
+            speedMps: pt.speed,
+            headingDeg: 45
+          })
+        });
+        await new Promise(r => setTimeout(r, 600));
+      }
+      log(`Courier arrived at destination!`);
+    }
+
+    async function courierOpenDeliverModal() {
+      const enteredOtp = prompt("Enter 4-Digit Customer OTP:", activeOrder ? activeOrder.deliveryOtp : "");
+      if (!enteredOtp) return;
+
+      const res = await fetch(`/api/v1/courier/orders/${activeOrder.id}/deliver`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courierId: currentCourierId, otp: enteredOtp })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        const isDigital = activeOrder.paymentMethod !== 'CASH_ON_DELIVERY';
+        const msg = isDigital
+          ? `✓ Delivery completed! Digital payment captured (Courier collected 0 cash).`
+          : `✓ Delivery completed! Cash collected: ${data.settlement.courierCashCollectedCents/(currentRegion==='TN'?1000:100)} ${activeOrder.currency}`;
+        log(msg);
+
+        document.getElementById('customer-order-status').innerText = 'DELIVERED (SETTLED)';
+        document.getElementById('customer-order-status').className = 'badge badge-delivered';
+        document.getElementById('courier-actions-card').style.display = 'none';
+
+        pollLedger();
+        updateCourierWallet();
+      } else {
+        alert(data.error);
+      }
+    }
+
+    async function updateCourierWallet() {
+      const res = await fetch(`/api/v1/courier/${currentCourierId}/wallet`);
+      const data = await res.json();
+      if (data.success) {
+        const isTN = currentRegion === 'TN';
+        const debt = data.data.currentCashDebtCents;
+        const maxLimit = data.data.maxCashLimitCents;
+        const debtLabel = isTN ? `${(debt/1000).toFixed(3)} TND` : `${(debt/100).toFixed(0)} DZD`;
+        const limitLabel = isTN ? `${(maxLimit/1000).toFixed(3)} TND` : `${(maxLimit/100).toFixed(0)} DZD`;
+
+        document.getElementById('courier-debt').innerText = debtLabel;
+        document.getElementById('courier-max-limit').innerText = limitLabel;
+        const pct = Math.min(100, Math.round((debt / maxLimit) * 100));
+        document.getElementById('debt-bar').style.width = `${pct}%`;
+      }
+    }
+
+    async function depositCash() {
+      const isTN = currentRegion === 'TN';
+      const depositCents = isTN ? 50000 : 300000;
+      const agency = isTN ? 'La Poste Tunisienne (D17 Agency)' : 'Algérie Poste Hydra';
+
+      const res = await fetch(`/api/v1/courier/${currentCourierId}/deposit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amountCents: depositCents, agencyName: agency })
+      });
+      const data = await res.json();
+      if (data.success) {
+        log(`Deposited cash at ${agency}. New balance updated.`);
+        updateCourierWallet();
+      }
+    }
+
+    async function pollLedger() {
+      const res = await fetch('/api/v1/admin/ledger');
+      const data = await res.json();
+      if (data.success) {
+        const b = data.balances;
+        const isTN = currentRegion === 'TN';
+        const div = isTN ? 1000 : 100;
+        const cur = isTN ? 'TND' : 'DZD';
+
+        const comm = ((b['PLATFORM_COMMISSION_REVENUE'] || 0) / div).toFixed(isTN?3:0);
+        const deliv = ((b['PLATFORM_DELIVERY_REVENUE'] || 0) / div).toFixed(isTN?3:0);
+        const total = (((b['PLATFORM_COMMISSION_REVENUE'] || 0) + (b['PLATFORM_DELIVERY_REVENUE'] || 0)) / div).toFixed(isTN?3:0);
+
+        document.getElementById('platform-revenue').innerText = `${total} ${cur}`;
+        document.getElementById('ledger-comm').innerText = `${comm} ${cur}`;
+        document.getElementById('ledger-delivery-take').innerText = `${deliv} ${cur}`;
+
+        const courierCash = ((b[`COURIER_CASH_${currentCourierId}`] || 0) / div).toFixed(isTN?3:0);
+        document.getElementById('ledger-courier-cash').innerText = `${courierCash} ${cur}`;
+
+        const mchKey = isTN ? 'MERCHANT_PAYABLE_mch-tun-001' : 'MERCHANT_PAYABLE_mch-alg-001';
+        const merchantPay = ((b[mchKey] || 0) / div).toFixed(isTN?3:0);
+        document.getElementById('ledger-merchant-payable').innerText = `${merchantPay} ${cur}`;
+      }
+    }
+
+    function switchCourier() {
+      currentCourierId = document.getElementById('courier-switcher').value;
+      updateCourierWallet();
+    }
+
+    window.onload = () => {
+      initMap();
+      changeRegion();
+      connectWS();
+    };
+  </script>
+</body>
+</html>

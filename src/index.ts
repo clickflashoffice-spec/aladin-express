@@ -1,10 +1,11 @@
 // ==============================================================================
-// Yassir Express API Gateway & Orchestrator
+// Aladin Express API Gateway & Orchestrator
 // Unified Entrypoint for Customer, Merchant, Courier & Real-Time Tracking
 // ==============================================================================
 
 import http from 'http';
 import path from 'path';
+import fs from 'fs';
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import { WebSocketServer } from 'ws';
@@ -20,11 +21,17 @@ import { createCourierRouter } from './api/courier-routes';
 import { TunisianPaymentService } from './services/tunisian-payment-service';
 import { createTunisianPaymentRouter } from './api/tunisian-payment-routes';
 
-export function createEcosystemServer() {
+export function createApp(): Express {
   const app: Express = express();
   app.use(cors());
   app.use(express.json());
-  app.use(express.static(path.join(__dirname, '../public')));
+
+  // Detect and serve static files from public folder (works locally and in serverless)
+  const publicDir = fs.existsSync(path.join(process.cwd(), 'public', 'index.html'))
+    ? path.join(process.cwd(), 'public')
+    : path.join(__dirname, '../public');
+
+  app.use(express.static(publicDir));
 
   // Instantiate core services
   const catalogService = new CatalogService();
@@ -39,11 +46,21 @@ export function createEcosystemServer() {
   );
   const tunisianPaymentService = new TunisianPaymentService();
 
+  // Root fallback: serve Web Simulator
+  app.get('/', (_req: Request, res: Response) => {
+    const indexPath = path.join(publicDir, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.send('Aladin Express Ecosystem Gateway Online');
+    }
+  });
+
   // Health and ecosystem metadata
   app.get('/api/v1/health', (_req: Request, res: Response) => {
     res.json({
       status: 'UP',
-      service: 'yassir-express-core-gateway',
+      service: 'aladin-express-core-gateway',
       version: '1.0.0',
       activeCouriers: telemetryService.getAllCouriers().length,
       activeMerchants: catalogService.getAllMerchants().length,
@@ -80,7 +97,23 @@ export function createEcosystemServer() {
     });
   });
 
+  // Store services in app.locals for reference
+  app.locals.services = {
+    catalogService,
+    telemetryService,
+    ledgerService,
+    dispatchEngine,
+    orderService,
+    tunisianPaymentService,
+  };
+
+  return app;
+}
+
+export function createEcosystemServer() {
+  const app = createApp();
   const server = http.createServer(app);
+  const { telemetryService } = app.locals.services;
 
   // Attach WebSocket server for real-time customer map tracking & dashboard events
   const wss = new WebSocketServer({ server, path: '/ws/tracking' });
@@ -102,18 +135,15 @@ export function createEcosystemServer() {
     app,
     server,
     wss,
-    catalogService,
-    telemetryService,
-    dispatchEngine,
-    orderService,
-    ledgerService,
-    tunisianPaymentService,
+    ...app.locals.services,
   };
 }
 
+const ecosystem = createEcosystemServer();
+const defaultApp = ecosystem.app;
+
 if (require.main === module) {
-  const { server } = createEcosystemServer();
-  server.listen(CONFIG.PORT, () => {
+  ecosystem.server.listen(CONFIG.PORT, () => {
     console.log(`=================================================================`);
     console.log(`🚀 ALADIN EXPRESS ECOSYSTEM ONLINE`);
     console.log(`📡 HTTP Gateway: http://localhost:${CONFIG.PORT}`);
@@ -121,3 +151,5 @@ if (require.main === module) {
     console.log(`=================================================================`);
   });
 }
+
+export default defaultApp;
