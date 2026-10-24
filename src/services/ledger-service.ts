@@ -116,12 +116,45 @@ export class LedgerService {
       this.updateBalance('PLATFORM_DELIVERY_REVENUE', platformDeliveryTakeCents);
 
       this.journalEntries.push({
-        id: `${journalEntryId}-digital`,
+        id: `${journalEntryId}-dig-clear`,
         orderId: order.id,
-        description: `Digital gateway capture (${order.paymentMethod}) for Order #${order.id}`,
+        description: `Digital gateway clearing (${order.paymentMethod}) for Order #${order.id}`,
         debitAccount: digitalClearingAccount,
-        creditAccount: merchantPayableAccount,
+        creditAccount: 'CUSTOMER_CLEARING',
         amountCents: totalCollectedCents,
+        currency: order.currency,
+        timestamp: new Date(),
+      });
+
+      this.journalEntries.push({
+        id: `${journalEntryId}-dig-merch`,
+        orderId: order.id,
+        description: `Merchant payable for Order #${order.id}`,
+        debitAccount: 'CUSTOMER_CLEARING',
+        creditAccount: merchantPayableAccount,
+        amountCents: merchantNetPayableCents,
+        currency: order.currency,
+        timestamp: new Date(),
+      });
+
+      this.journalEntries.push({
+        id: `${journalEntryId}-dig-cour`,
+        orderId: order.id,
+        description: `Courier earning for Order #${order.id}`,
+        debitAccount: 'CUSTOMER_CLEARING',
+        creditAccount: courierPayableAccount,
+        amountCents: courierNetEarningCents,
+        currency: order.currency,
+        timestamp: new Date(),
+      });
+
+      this.journalEntries.push({
+        id: `${journalEntryId}-dig-plat`,
+        orderId: order.id,
+        description: `Platform fee for Order #${order.id}`,
+        debitAccount: 'CUSTOMER_CLEARING',
+        creditAccount: 'PLATFORM_COMMISSION_REVENUE',
+        amountCents: platformTotalRevenueCents,
         currency: order.currency,
         timestamp: new Date(),
       });
@@ -141,10 +174,13 @@ export class LedgerService {
   }
 
   /**
-   * Check if courier has reached the maximum allowed cash ceiling (15,000 DZD).
+   * Check if courier has reached their maximum allowed cash ceiling.
    */
-  public isCourierDebtExceeded(currentDebtCents: number): boolean {
-    return currentDebtCents >= CONFIG.ALGERIA_MAX_COD_DEBT_LIMIT_CENTS;
+  public isCourierDebtExceeded(
+    currentDebtCents: number,
+    maxLimitCents: number = CONFIG.ALGERIA_MAX_COD_DEBT_LIMIT_CENTS
+  ): boolean {
+    return currentDebtCents >= maxLimitCents;
   }
 
   /**

@@ -139,14 +139,20 @@ export class TunisianPaymentService {
       return { success: false, error: 'Transaction not found' };
     }
 
-    // Verify cryptographic signature: HMAC-SHA256(paymentId + gatewayReference + status, SMT_SECRET)
+    // Verify cryptographic signature using constant-time comparison
     const expectedData = `${payload.paymentId}:${payload.gatewayReference}:${payload.status}`;
     const calculatedSignature = crypto
       .createHmac('sha256', this.SMT_SECRET_KEY)
       .update(expectedData)
       .digest('hex');
 
-    if (calculatedSignature !== payload.signature) {
+    const calculatedBuffer = Buffer.from(calculatedSignature, 'hex');
+    const providedBuffer = Buffer.from(payload.signature, 'hex');
+
+    if (
+      calculatedBuffer.length !== providedBuffer.length ||
+      !crypto.timingSafeEqual(calculatedBuffer, providedBuffer)
+    ) {
       return { success: false, error: 'Invalid SMT HMAC signature' };
     }
 

@@ -3,6 +3,7 @@
 // Handles order creation, kitchen acceptance, courier dispatching, and delivery
 // ==============================================================================
 
+import * as crypto from 'crypto';
 import { CONFIG } from '../config';
 import {
   CourierStatus,
@@ -47,12 +48,19 @@ export class OrderService {
     if (!merchant.isOpen) {
       return { success: false, error: 'Merchant is currently closed' };
     }
+    if (!params.items || params.items.length === 0) {
+      return { success: false, error: 'Order must contain at least one item' };
+    }
 
     // Resolve items and calculate subtotal
     let subtotalCents = 0;
     const resolvedItems: OrderItem[] = [];
 
     for (const itemReq of params.items) {
+      if (!itemReq.quantity || itemReq.quantity <= 0 || !Number.isInteger(itemReq.quantity)) {
+        return { success: false, error: `Invalid quantity for item ${itemReq.menuItemId}` };
+      }
+
       const menuItem = this.catalogService.getMenuItem(merchant.id, itemReq.menuItemId);
       if (!menuItem) {
         return { success: false, error: `Menu item ${itemReq.menuItemId} not found` };
@@ -85,8 +93,8 @@ export class OrderService {
 
     const totalAmountCents = subtotalCents + deliveryFeeCents;
 
-    // Generate random 4-digit OTP for contactless / verified handover
-    const deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    // Generate cryptographically secure 4-digit OTP for contactless / verified handover
+    const deliveryOtp = crypto.randomInt(1000, 10000).toString();
     const orderId = `ord-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     const order: Order = {

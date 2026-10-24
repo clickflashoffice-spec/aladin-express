@@ -147,16 +147,23 @@ export function createCourierRouter(
       return res.status(404).json({ success: false, error: 'Courier not found' });
     }
 
-    const isExceeded = ledgerService.isCourierDebtExceeded(courier.currentCashDebtCents);
+    const isTunisia = courierId.startsWith('courier-tn-');
+    const currency = isTunisia ? 'TND' : 'DZD';
+    const divisor = isTunisia ? 1000 : 100;
+    const isExceeded = ledgerService.isCourierDebtExceeded(
+      courier.currentCashDebtCents,
+      courier.maxCashLimitCents
+    );
 
     res.json({
       success: true,
       data: {
         courierId: courier.id,
+        currency,
         currentCashDebtCents: courier.currentCashDebtCents,
-        currentCashDebtDZD: courier.currentCashDebtCents / 100,
+        currentCashDebtFormatted: `${(courier.currentCashDebtCents / divisor).toFixed(isTunisia ? 3 : 2)} ${currency}`,
         maxCashLimitCents: courier.maxCashLimitCents,
-        maxCashLimitDZD: courier.maxCashLimitCents / 100,
+        maxCashLimitFormatted: `${(courier.maxCashLimitCents / divisor).toFixed(isTunisia ? 3 : 2)} ${currency}`,
         debtExceeded: isExceeded,
         canAcceptOrders: !isExceeded,
       },

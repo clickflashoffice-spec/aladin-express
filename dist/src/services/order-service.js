@@ -3,8 +3,42 @@
 // Yassir Express Order Management Service & FSM
 // Handles order creation, kitchen acceptance, courier dispatching, and delivery
 // ==============================================================================
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrderService = void 0;
+const crypto = __importStar(require("crypto"));
 const config_1 = require("../config");
 const types_1 = require("../types");
 class OrderService {
@@ -30,10 +64,16 @@ class OrderService {
         if (!merchant.isOpen) {
             return { success: false, error: 'Merchant is currently closed' };
         }
+        if (!params.items || params.items.length === 0) {
+            return { success: false, error: 'Order must contain at least one item' };
+        }
         // Resolve items and calculate subtotal
         let subtotalCents = 0;
         const resolvedItems = [];
         for (const itemReq of params.items) {
+            if (!itemReq.quantity || itemReq.quantity <= 0 || !Number.isInteger(itemReq.quantity)) {
+                return { success: false, error: `Invalid quantity for item ${itemReq.menuItemId}` };
+            }
             const menuItem = this.catalogService.getMenuItem(merchant.id, itemReq.menuItemId);
             if (!menuItem) {
                 return { success: false, error: `Menu item ${itemReq.menuItemId} not found` };
@@ -59,8 +99,8 @@ class OrderService {
             ? 2500 + Math.round(distanceKm * 500) // 2.500 TND base + 0.500 TND/km (in millimes)
             : config_1.CONFIG.BASE_DELIVERY_FEE_CENTS + Math.round(distanceKm * config_1.CONFIG.PER_KM_DELIVERY_FEE_CENTS);
         const totalAmountCents = subtotalCents + deliveryFeeCents;
-        // Generate random 4-digit OTP for contactless / verified handover
-        const deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
+        // Generate cryptographically secure 4-digit OTP for contactless / verified handover
+        const deliveryOtp = crypto.randomInt(1000, 10000).toString();
         const orderId = `ord-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         const order = {
             id: orderId,

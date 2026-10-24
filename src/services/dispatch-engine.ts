@@ -53,8 +53,8 @@ export class DispatchEngine {
         continue;
       }
 
-      // Must not exceed cash debt limit
-      if (this.ledgerService.isCourierDebtExceeded(courier.currentCashDebtCents)) {
+      // Must not exceed courier's cash debt limit
+      if (courier.currentCashDebtCents >= courier.maxCashLimitCents) {
         continue;
       }
 

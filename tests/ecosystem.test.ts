@@ -228,3 +228,73 @@ test('Tunisian e-Payment: SMT HMAC-SHA256 signature, Flouci & 3-decimal TND mill
   // Courier receives 80% of 3.500 TND delivery fee = 2.800 TND (2,800 millimes)
   assert.strictEqual(settlement.courierNetEarningCents, 2800);
 });
+
+test('Security & Robustness: Input validation, secure OTP, and cross-region debt limit', () => {
+  const catalog = new CatalogService();
+  const telemetry = new TelemetryService();
+  const ledger = new LedgerService();
+  const dispatch = new DispatchEngine(telemetry, ledger);
+  const orders = new OrderService(catalog, telemetry, dispatch, ledger);
+
+  // 1. Rejects empty items list
+  const emptyRes = orders.createOrder({
+    customerId: 'cust-1',
+    customerName: 'Test Customer',
+    merchantId: 'mch-alg-001',
+    items: [],
+    deliveryLocation: { latitude: 36.75, longitude: 3.05 },
+    deliveryAddress: 'Hydra, Algiers',
+    paymentMethod: PaymentMethod.CASH_ON_DELIVERY,
+  });
+  assert.strictEqual(emptyRes.success, false);
+  assert.strictEqual(emptyRes.error, 'Order must contain at least one item');
+
+  // 2. Rejects negative or zero item quantities
+  const negRes = orders.createOrder({
+    customerId: 'cust-1',
+    customerName: 'Test Customer',
+    merchantId: 'mch-alg-001',
+    items: [{ menuItemId: 'item-001', quantity: -2 }],
+    deliveryLocation: { latitude: 36.75, longitude: 3.05 },
+    deliveryAddress: 'Hydra, Algiers',
+    paymentMethod: PaymentMethod.CASH_ON_DELIVERY,
+  });
+  assert.strictEqual(negRes.success, false);
+  assert.strictEqual(negRes.error, 'Invalid quantity for item item-001');
+
+  // 3. Cryptographically secure OTP is generated on valid order
+  const validRes = orders.createOrder({
+    customerId: 'cust-1',
+    customerName: 'Test Customer',
+    merchantId: 'mch-alg-001',
+    items: [{ menuItemId: 'item-001', quantity: 1 }],
+    deliveryLocation: { latitude: 36.75, longitude: 3.05 },
+    deliveryAddress: 'Hydra, Algiers',
+    paymentMethod: PaymentMethod.CASH_ON_DELIVERY,
+  });
+  assert.strictEqual(validRes.success, true);
+  assert.match(validRes.order!.deliveryOtp, /^\d{4}$/);
+
+  // 4. Tunisian courier debt limit check (400 TND cap = 400,000 millimes)
+  const tnCourier = telemetry.getCourier('courier-tn-002')!;
+  // Current debt is 380,000 millimes. Set to 401,000 millimes (> 400,000 cap)
+  tnCourier.currentCashDebtCents = 401000;
+  assert.strictEqual(ledger.isCourierDebtExceeded(tnCourier.currentCashDebtCents, tnCourier.maxCashLimitCents), true);
+
+  // 5. Digital payment journal entries balance check
+  ledger.recordOrderDelivery(
+    {
+      id: 'ord-test-dig',
+      merchantId: 'mch-alg-001',
+      itemsSubtotalCents: 10000,
+      deliveryFeeCents: 2000,
+      totalAmountCents: 12000,
+      paymentMethod: PaymentMethod.SMT_CLICTOPAY,
+      currency: 'DZD',
+    } as any,
+    'courier-001'
+  );
+  const entries = ledger.getJournalEntries();
+  const digitalEntries = entries.filter(e => e.id.includes('dig-'));
+  assert.strictEqual(digitalEntries.length, 4); // clear, merch, cour, plat
+});

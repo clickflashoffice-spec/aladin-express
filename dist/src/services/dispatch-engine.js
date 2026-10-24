@@ -36,8 +36,8 @@ class DispatchEngine {
             if (courier.status !== types_1.CourierStatus.ONLINE_IDLE) {
                 continue;
             }
-            // Must not exceed cash debt limit
-            if (this.ledgerService.isCourierDebtExceeded(courier.currentCashDebtCents)) {
+            // Must not exceed courier's cash debt limit
+            if (courier.currentCashDebtCents >= courier.maxCashLimitCents) {
                 continue;
             }
             const distanceKm = this.telemetryService.calculateDistanceKm(courier.currentLocation, merchantLocation);
