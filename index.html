@@ -221,10 +221,16 @@
       </select>
     </div>
     <div class="header-metrics">
-      <div class="metric-pill">Gateway: <strong id="gw-status">ONLINE (8080)</strong></div>
-      <div class="metric-pill">e-Payment Gateway: <strong id="payment-gw-status" style="color:#60A5FA">SMT & Flouci ACTIVE</strong></div>
+      <nav style="display:flex; align-items:center; gap:8px;">
+        <a href="/" style="color:#F59E0B; text-decoration:none; font-weight:700; font-size:0.8rem; padding:4px 8px; border-radius:6px; background:rgba(255,255,255,0.08);">Simulator</a>
+        <a href="/partner" style="color:#94A3B8; text-decoration:none; font-weight:600; font-size:0.8rem; padding:4px 8px; border-radius:6px;">Partner</a>
+        <a href="/kitchen" style="color:#94A3B8; text-decoration:none; font-weight:600; font-size:0.8rem; padding:4px 8px; border-radius:6px;">Kitchen</a>
+        <button onclick="openApkModal()" style="background:#047857; color:#fff; border:none; padding:4px 10px; border-radius:6px; font-weight:700; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:4px;">
+          📱 APK
+        </button>
+      </nav>
       <div class="metric-pill">Active Orders: <strong id="total-orders-count">0</strong></div>
-      <div class="metric-pill">Platform Revenue: <strong id="platform-revenue">0 TND</strong></div>
+      <div class="metric-pill">Revenue: <strong id="platform-revenue">0 TND</strong></div>
     </div>
   </header>
 
@@ -927,11 +933,46 @@
       updateCourierWallet();
     }
 
+    function openApkModal() {
+      document.getElementById('apk-modal').style.display = 'flex';
+    }
+
+    function closeApkModal() {
+      document.getElementById('apk-modal').style.display = 'none';
+    }
+
     window.onload = () => {
       initMap();
       changeRegion();
       connectWS();
     };
   </script>
+
+  <!-- Barcode & APK Download Modal -->
+  <div id="apk-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(6px); z-index:9999; align-items:center; justify-content:center;" onclick="closeApkModal()">
+    <div style="background:#151D2F; border:1px solid #232E45; border-radius:16px; padding:24px; max-width:440px; width:90%; text-align:center; position:relative; box-shadow:0 15px 40px rgba(0,0,0,0.6);" onclick="event.stopPropagation()">
+      <button onclick="closeApkModal()" style="position:absolute; top:12px; right:12px; background:none; border:none; color:#94A3B8; font-size:1.3rem; cursor:pointer;">&times;</button>
+      <img src="/logo.png" style="width:48px; height:48px; border-radius:10px; margin-bottom:8px;" alt="Aladin Express Logo">
+      <h3 style="font-size:1.2rem; margin-bottom:4px;">Aladin Express Android APK</h3>
+      <p style="color:#94A3B8; font-size:0.82rem; margin-bottom:14px;">Scan with phone camera or barcode scanner to download</p>
+      
+      <div style="background:#fff; padding:12px; border-radius:12px; display:inline-block; margin-bottom:12px;">
+        <img src="/apk-qr-download.png" style="width:200px; height:200px; display:block;" alt="APK QR Code">
+      </div>
+
+      <div style="background:#fff; padding:8px; border-radius:8px; display:inline-block; margin-bottom:12px; width:100%; max-width:280px;">
+        <img src="/apk-barcode.svg" style="width:100%; height:auto; display:block;" alt="Code 128 Barcode">
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:8px;">
+        <a href="/download/aladin-express.apk" download="aladin-express.apk" style="flex:1; background:#047857; color:#fff; padding:10px; border-radius:8px; text-decoration:none; font-weight:700; font-size:0.85rem; display:inline-block;">
+          ⬇️ Direct Download (3.71 MB)
+        </a>
+        <a href="/download" style="background:rgba(255,255,255,0.08); color:#fff; padding:10px 14px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem; border:1px solid #232E45;">
+          Specs & Docs
+        </a>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aladin Express - Kitchen Display System (KDS) & Darkstore Picker</title>
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <style>
+    :root {
+      --primary: #047857;
+      --primary-hover: #065F46;
+      --accent: #F59E0B;
+      --bg: #0A0D14;
+      --surface: #121826;
+      --surface-border: #1F293D;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --blue: #3B82F6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Kitchen Header */
+    header {
+      background: #0F1420;
+      border-bottom: 2px solid var(--surface-border);
+      padding: 8px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 60px;
+    }
+    .kds-branding {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .kds-branding img { width: 34px; height: 34px; border-radius: 8px; }
+    .kds-title { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.5px; }
+    .kds-badge {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid var(--danger);
+      color: #F87171;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .kds-stats {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .kds-clock {
+      font-family: 'Courier New', monospace;
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--accent);
+      background: rgba(0, 0, 0, 0.4);
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--surface-border);
+    }
+    .sound-toggle-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--surface-border);
+      color: #fff;
+      font-size: 0.85rem;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .sound-toggle-btn.active {
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-left: 12px;
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+    .nav-links a:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+
+    /* Top Filter Bar */
+    .filter-bar {
+      background: #151D2F;
+      border-bottom: 1px solid var(--surface-border);
+      padding: 8px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    select {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--surface-border);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .mode-toggle {
+      display: flex;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 8px;
+      border: 1px solid var(--surface-border);
+      padding: 2px;
+    }
+    .mode-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .mode-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    /* KDS Kanban Workspace */
+    .kanban-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr 1fr;
+      gap: 14px;
+      padding: 14px;
+      flex: 1;
+      overflow: hidden;
+    }
+    @media (max-width: 900px) {
+      .kanban-grid { grid-template-columns: 1fr; overflow-y: auto; }
+    }
+
+    .kanban-col {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .kanban-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--surface-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 800;
+      background: rgba(0, 0, 0, 0.25);
+    }
+    .kanban-body {
+      padding: 12px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Kitchen Ticket Card */
+    .ticket-card {
+      background: #192238;
+      border: 2px solid var(--surface-border);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+    .ticket-card.urgent {
+      border-color: var(--danger);
+      animation: pulse-border 1.5s infinite;
+    }
+    @keyframes pulse-border {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .ticket-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+      padding-bottom: 8px;
+    }
+    .ticket-id { font-size: 1.1rem; font-weight: 900; font-family: 'Courier New', monospace; }
+    .ticket-timer {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Checklist of items */
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+    }
+    .checklist-item.done {
+      text-decoration: line-through;
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+    .check-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 2px solid var(--surface-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+    }
+    .checklist-item.done .check-box {
+      background: var(--success);
+      border-color: var(--success);
+      color: #fff;
+    }
+
+    .kds-btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s;
+    }
+    .kds-btn:hover { background: var(--primary-hover); }
+    .kds-btn.ready-btn { background: var(--success); }
+    .kds-btn.ready-btn:hover { background: #059669; }
+    .kds-btn.print-btn { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--surface-border); font-size: 0.8rem; padding: 6px 12px; }
+
+    /* Thermal Slip Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .thermal-receipt {
+      background: #FFFDF0;
+      color: #111;
+      width: 320px;
+      padding: 20px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.82rem;
+      border-radius: 4px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Kitchen Header -->
+  <header>
+    <a href="/" class="kds-branding">
+      <img src="/logo.png" alt="Aladin Express">
+      <div class="kds-title">Aladin <span style="color: var(--accent);">KDS</span></div>
+      <span class="kds-badge">Kitchen Display</span>
+    </a>
+
+    <div class="kds-stats">
+      <div id="kitchen-clock" class="kds-clock">18:30:00</div>
+      <button id="sound-btn" class="sound-toggle-btn active" onclick="toggleSound()">🔔 Sound Chime (ON)</button>
+      <button onclick="simulateOrderDrop()" style="background: var(--accent); color: #000; font-weight: 800; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">
+        + Test New Order
+      </button>
+    </div>
+
+    <nav class="nav-links">
+      <a href="/">Simulator</a>
+      <a href="/partner">Partner Portal</a>
+      <a href="/kitchen" style="color: var(--accent); font-weight: 800;">Kitchen KDS</a>
+      <a href="/download">📱 Download APK</a>
+    </nav>
+  </header>
+
+  <!-- Filter & Kitchen Mode -->
+  <div class="filter-bar">
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">Station:</span>
+      <select id="station-select">
+        <option>All Kitchen Stations (Grill, Fryer, Assembly)</option>
+        <option>Station #1 - Hot Grill & Burgers</option>
+        <option>Station #2 - Fryer & Sides</option>
+        <option>Station #3 - Packing & Courier Dispatch</option>
+      </select>
+    </div>
+
+    <div class="mode-toggle">
+      <button id="mode-restaurant" class="mode-btn active" onclick="setMode('restaurant')">🍳 Restaurant Kitchen</button>
+      <button id="mode-darkstore" class="mode-btn" onclick="setMode('darkstore')">📦 Dark Store Grocery Picker</button>
+    </div>
+  </div>
+
+  <!-- 3-Column Kitchen Board -->
+  <div class="kanban-grid">
+    <!-- Col 1: Incoming / New Orders -->
+    <div class="kanban-col">
+      <div class="kanban-header">
+        <span>🔔 INCOMING ORDERS</span>
+        <span id="badge-incoming" style="background: var(--warning); color: #000; padding: 2px 8px; border-radius: 12px; font-weight: 900;">2</span>
+      </div>
+      <div id="col-incoming" class="kanban-body">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Col 2: Cooking in Progress -->
+    <div class="kanban-col">
+      <div class="kanban-header">
+        <span>👨‍🍳 COOKING & PACKING</span>
+        <span id="badge-cooking" style="background: var(--blue); color: #fff; padding: 2px 8px; border-radius: 12px; font-weight: 900;">1</span>
+      </div>
+      <div id="col-cooking" class="kanban-body">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Col 3: Ready for Courier Pickup -->
+    <div class="kanban-col">
+      <div class="kanban-header">
+        <span>🛵 READY FOR PICKUP</span>
+        <span id="badge-ready" style="background: var(--success); color: #fff; padding: 2px 8px; border-radius: 12px; font-weight: 900;">1</span>
+      </div>
+      <div id="col-ready" class="kanban-body">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Thermal Slip Modal -->
+  <div id="receipt-modal" class="modal-overlay" onclick="closeReceipt()">
+    <div class="thermal-receipt" onclick="event.stopPropagation()">
+      <div style="text-align: center; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px;">
+        *** ALADIN EXPRESS ***<br>KITCHEN ORDER TICKET
+      </div>
+      <div style="border-top: 1px dashed #333; margin: 8px 0;"></div>
+      <div id="receipt-details"></div>
+      <div style="border-top: 1px dashed #333; margin: 8px 0;"></div>
+      <div style="text-align: center; margin-top: 10px;">
+        <svg id="receipt-barcode" width="220" height="50"></svg>
+        <div style="font-size: 0.75rem; margin-top: 4px;">SCAN FOR DISPATCH HANDOVER</div>
+      </div>
+      <button onclick="closeReceipt()" style="width: 100%; margin-top: 15px; background: #111; color: #fff; border: none; padding: 8px; cursor: pointer; font-weight: bold;">
+        [Close Ticket]
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let soundEnabled = true;
+    let audioCtx = null;
+    let kitchenOrders = [
+      {
+        id: 'ORD-9021',
+        timeCreated: Date.now() - 1000 * 60 * 2,
+        status: 'INCOMING',
+        customer: 'Amine K. (Alger)',
+        items: [
+          { name: 'Classic Smash Burger Double', qty: 2, note: 'Extra cheddar, No pickles', done: false },
+          { name: 'Crispy Truffle Fries', qty: 1, note: 'Truffle dip on side', done: false },
+          { name: 'Selecto Algerian Soda 33cl', qty: 2, note: 'Ice cold', done: false }
+        ],
+        courier: 'Karim Mansouri (🛵 4 mins away)'
+      },
+      {
+        id: 'ORD-9022',
+        timeCreated: Date.now() - 1000 * 60 * 6,
+        status: 'COOKING',
+        customer: 'Syrine M. (Tunis)',
+        items: [
+          { name: 'Ojja aux Merguez Artisanales', qty: 1, note: 'Medium spicy', done: true },
+          { name: 'Kafteji Traditionnel', qty: 1, note: 'Extra fried egg', done: false },
+          { name: 'Boga Cidre 33cl', qty: 2, note: '', done: true }
+        ],
+        courier: 'Yassine Dridi (🛵 2 mins away)'
+      },
+      {
+        id: 'ORD-9019',
+        timeCreated: Date.now() - 1000 * 60 * 14,
+        status: 'READY',
+        customer: 'Mehdi B. (Hydra)',
+        items: [
+          { name: 'Pizza Margherita Di Bufala', qty: 1, note: 'Spicy chili oil', done: true },
+          { name: 'Tiramisu Speculoos', qty: 1, note: '', done: true }
+        ],
+        courier: 'Sofiane B. (🛵 At Restaurant Entrance)'
+      }
+    ];
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('kitchen-clock').innerText = now.toTimeString().split(' ')[0];
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function playChime() {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+      } catch (e) {}
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById('sound-btn');
+      if (soundEnabled) {
+        btn.className = 'sound-toggle-btn active';
+        btn.innerText = '🔔 Sound Chime (ON)';
+      } else {
+        btn.className = 'sound-toggle-btn';
+        btn.innerText = '🔕 Sound Chime (OFF)';
+      }
+    }
+
+    function renderBoard() {
+      const colIncoming = document.getElementById('col-incoming');
+      const colCooking = document.getElementById('col-cooking');
+      const colReady = document.getElementById('col-ready');
+
+      const incoming = kitchenOrders.filter(o => o.status === 'INCOMING');
+      const cooking = kitchenOrders.filter(o => o.status === 'COOKING');
+      const ready = kitchenOrders.filter(o => o.status === 'READY');
+
+      document.getElementById('badge-incoming').innerText = incoming.length;
+      document.getElementById('badge-cooking').innerText = cooking.length;
+      document.getElementById('badge-ready').innerText = ready.length;
+
+      colIncoming.innerHTML = incoming.map(o => createTicketHTML(o)).join('');
+      colCooking.innerHTML = cooking.map(o => createTicketHTML(o)).join('');
+      colReady.innerHTML = ready.map(o => createTicketHTML(o)).join('');
+    }
+
+    function createTicketHTML(order) {
+      const elapsedMins = Math.floor((Date.now() - order.timeCreated) / 60000);
+      const isUrgent = elapsedMins >= 10;
+
+      let actionButton = '';
+      if (order.status === 'INCOMING') {
+        actionButton = `
+          <button class="kds-btn" onclick="startCooking('${order.id}')">
+            🔥 START COOKING (15m)
+          </button>
+        `;
+      } else if (order.status === 'COOKING') {
+        actionButton = `
+          <button class="kds-btn ready-btn" onclick="markReady('${order.id}')">
+            ✓ MARK READY FOR COURIER
+          </button>
+        `;
+      } else {
+        actionButton = `
+          <button class="kds-btn" style="background: rgba(255,255,255,0.08); border: 1px solid var(--surface-border);" onclick="completeOrder('${order.id}')">
+            🤝 Hand to Courier (${order.courier.split(' ')[0]})
+          </button>
+        `;
+      }
+
+      return `
+        <div class="ticket-card ${isUrgent ? 'urgent' : ''}">
+          <div class="ticket-header">
+            <span class="ticket-id">#${order.id}</span>
+            <div class="ticket-timer">
+              ⏱️ ${elapsedMins}m ago
+            </div>
+            <button class="kds-btn print-btn" onclick="printReceipt('${order.id}')">🖨️ Slip</button>
+          </div>
+
+          <div style="font-size: 0.8rem; color: var(--text-muted);">
+            Customer: <strong style="color: #fff;">${order.customer}</strong><br>
+            Courier: <span style="color: var(--accent);">${order.courier}</span>
+          </div>
+
+          <div style="border-top: 1px solid var(--surface-border); padding-top: 6px;">
+            ${order.items.map((item, idx) => `
+              <div class="checklist-item ${item.done ? 'done' : ''}" onclick="toggleChecklist('${order.id}', ${idx})">
+                <div class="check-box">${item.done ? '✓' : ''}</div>
+                <div>
+                  <strong>${item.qty}x</strong> ${item.name}
+                  ${item.note ? `<div style="font-size: 0.72rem; color: var(--accent);">* ${item.note}</div>` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          ${actionButton}
+        </div>
+      `;
+    }
+
+    function toggleChecklist(orderId, itemIdx) {
+      const order = kitchenOrders.find(o => o.id === orderId);
+      if (order && order.items[itemIdx]) {
+        order.items[itemIdx].done = !order.items[itemIdx].done;
+        renderBoard();
+      }
+    }
+
+    function startCooking(orderId) {
+      const order = kitchenOrders.find(o => o.id === orderId);
+      if (order) {
+        order.status = 'COOKING';
+        playChime();
+        renderBoard();
+      }
+    }
+
+    function markReady(orderId) {
+      const order = kitchenOrders.find(o => o.id === orderId);
+      if (order) {
+        order.status = 'READY';
+        order.items.forEach(i => i.done = true);
+        playChime();
+        renderBoard();
+      }
+    }
+
+    function completeOrder(orderId) {
+      kitchenOrders = kitchenOrders.filter(o => o.id !== orderId);
+      renderBoard();
+    }
+
+    function simulateOrderDrop() {
+      const newId = `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
+      kitchenOrders.unshift({
+        id: newId,
+        timeCreated: Date.now(),
+        status: 'INCOMING',
+        customer: 'Walid T. (Sidi Yahia)',
+        items: [
+          { name: 'Double Cheese Smash Burger', qty: 1, note: 'Extra sauce', done: false },
+          { name: 'Crispy Truffle Fries', qty: 1, note: '', done: false }
+        ],
+        courier: 'Searching nearby couriers...'
+      });
+      playChime();
+      renderBoard();
+    }
+
+    function printReceipt(orderId) {
+      const order = kitchenOrders.find(o => o.id === orderId);
+      if (!order) return;
+
+      const dateStr = new Date().toLocaleString();
+      document.getElementById('receipt-details').innerHTML = `
+        <strong>TICKET #${order.id}</strong><br>
+        TIME: ${dateStr}<br>
+        CUST: ${order.customer}<br>
+        COURIER: ${order.courier}<br>
+        --------------------------------<br>
+        ITEMS:<br>
+        ${order.items.map(i => `${i.qty}x ${i.name}<br>   * ${i.note || 'Normal'}`).join('<br>')}<br>
+        --------------------------------<br>
+        STATUS: ${order.status}
+      `;
+
+      // Draw simple barcode into svg
+      const svg = document.getElementById('receipt-barcode');
+      let x = 10;
+      let rects = '';
+      for (let i = 0; i < 40; i++) {
+        const w = (i % 3 === 0) ? 3 : (i % 2 === 0 ? 1 : 2);
+        if (i % 2 === 0) rects += `<rect x="${x}" y="0" width="${w}" height="45" fill="#111" />`;
+        x += w + 2;
+      }
+      svg.innerHTML = rects;
+
+      document.getElementById('receipt-modal').classList.add('active');
+    }
+
+    function closeReceipt() {
+      document.getElementById('receipt-modal').classList.remove('active');
+    }
+
+    function setMode(mode) {
+      document.getElementById('mode-restaurant').classList.toggle('active', mode === 'restaurant');
+      document.getElementById('mode-darkstore').classList.toggle('active', mode === 'darkstore');
+      if (mode === 'darkstore') {
+        alert("Switched to Aladin Market Dark Store Fulfillment mode:\n- Aisle / Shelf / Bin navigation enabled\n- Barcode item scanning checklist active");
+      }
+    }
+
+    window.onload = () => {
+      renderBoard();
+    };
+  </script>
+</body>
+</html>

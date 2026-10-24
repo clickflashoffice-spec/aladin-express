@@ -52,6 +52,50 @@ function createApp() {
             res.send('Aladin Express Ecosystem Gateway Online');
         }
     });
+    // Dedicated Partner Portal WebApp
+    app.get('/partner', (_req, res) => {
+        const partnerPath = path_1.default.join(publicDir, 'partner.html');
+        if (fs_1.default.existsSync(partnerPath)) {
+            res.sendFile(partnerPath);
+        }
+        else {
+            res.redirect('/');
+        }
+    });
+    // Dedicated Kitchen Display System (KDS) WebApp
+    app.get('/kitchen', (_req, res) => {
+        const kitchenPath = path_1.default.join(publicDir, 'kitchen.html');
+        if (fs_1.default.existsSync(kitchenPath)) {
+            res.sendFile(kitchenPath);
+        }
+        else {
+            res.redirect('/');
+        }
+    });
+    // Dedicated Android APK Download & Barcode Page
+    app.get('/download', (_req, res) => {
+        const downloadPagePath = path_1.default.join(publicDir, 'download.html');
+        if (fs_1.default.existsSync(downloadPagePath)) {
+            res.sendFile(downloadPagePath);
+        }
+        else {
+            res.redirect('/');
+        }
+    });
+    // Direct APK Binary Download Endpoint (with proper APK MIME type & headers)
+    app.get(['/download/aladin-express.apk', '/aladin-express.apk'], (_req, res) => {
+        const apkPath = fs_1.default.existsSync(path_1.default.join(publicDir, 'download', 'aladin-express.apk'))
+            ? path_1.default.join(publicDir, 'download', 'aladin-express.apk')
+            : path_1.default.join(process.cwd(), 'dist/apk/AladinExpress-v1.0.0-release.apk');
+        if (fs_1.default.existsSync(apkPath)) {
+            res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+            res.setHeader('Content-Disposition', 'attachment; filename="aladin-express.apk"');
+            res.sendFile(apkPath);
+        }
+        else {
+            res.status(404).json({ error: 'APK file not found on server' });
+        }
+    });
     // Health and ecosystem metadata
     app.get('/api/v1/health', (_req, res) => {
         res.json({

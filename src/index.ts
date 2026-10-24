@@ -56,6 +56,51 @@ export function createApp(): Express {
     }
   });
 
+  // Dedicated Partner Portal WebApp
+  app.get('/partner', (_req: Request, res: Response) => {
+    const partnerPath = path.join(publicDir, 'partner.html');
+    if (fs.existsSync(partnerPath)) {
+      res.sendFile(partnerPath);
+    } else {
+      res.redirect('/');
+    }
+  });
+
+  // Dedicated Kitchen Display System (KDS) WebApp
+  app.get('/kitchen', (_req: Request, res: Response) => {
+    const kitchenPath = path.join(publicDir, 'kitchen.html');
+    if (fs.existsSync(kitchenPath)) {
+      res.sendFile(kitchenPath);
+    } else {
+      res.redirect('/');
+    }
+  });
+
+  // Dedicated Android APK Download & Barcode Page
+  app.get('/download', (_req: Request, res: Response) => {
+    const downloadPagePath = path.join(publicDir, 'download.html');
+    if (fs.existsSync(downloadPagePath)) {
+      res.sendFile(downloadPagePath);
+    } else {
+      res.redirect('/');
+    }
+  });
+
+  // Direct APK Binary Download Endpoint (with proper APK MIME type & headers)
+  app.get(['/download/aladin-express.apk', '/aladin-express.apk'], (_req: Request, res: Response) => {
+    const apkPath = fs.existsSync(path.join(publicDir, 'download', 'aladin-express.apk'))
+      ? path.join(publicDir, 'download', 'aladin-express.apk')
+      : path.join(process.cwd(), 'dist/apk/AladinExpress-v1.0.0-release.apk');
+
+    if (fs.existsSync(apkPath)) {
+      res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+      res.setHeader('Content-Disposition', 'attachment; filename="aladin-express.apk"');
+      res.sendFile(apkPath);
+    } else {
+      res.status(404).json({ error: 'APK file not found on server' });
+    }
+  });
+
   // Health and ecosystem metadata
   app.get('/api/v1/health', (_req: Request, res: Response) => {
     res.json({

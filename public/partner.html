@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aladin Express - Merchant & Restaurant Partner Portal</title>
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <style>
+    :root {
+      --primary: #047857;
+      --primary-hover: #065F46;
+      --accent: #F59E0B;
+      --bg: #0B0F19;
+      --surface: #151D2F;
+      --surface-border: #232E45;
+      --text: #F1F5F9;
+      --text-muted: #94A3B8;
+      --success: #10B981;
+      --danger: #EF4444;
+      --tunisia-red: #E70013;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 60px;
+    }
+    .logo-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .logo-badge img { width: 34px; height: 34px; border-radius: 8px; }
+    .logo-badge h1 { font-size: 1.15rem; font-weight: 800; }
+    .logo-badge h1 span { color: var(--accent); }
+    .partner-pill {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 10px;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .nav-links a:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+
+    /* Top Controls Bar */
+    .controls-bar {
+      background: #111827;
+      border-bottom: 1px solid var(--surface-border);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .store-select-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    select, input {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--surface-border);
+      color: #fff;
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    .status-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--surface-border);
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 10px var(--success);
+    }
+    .status-dot.offline {
+      background: var(--danger);
+      box-shadow: 0 0 10px var(--danger);
+    }
+
+    /* Tabs Bar */
+    .tabs-bar {
+      display: flex;
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      padding: 0 20px;
+      gap: 8px;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 14px 18px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { color: #fff; }
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    main {
+      flex: 1;
+      padding: 20px;
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Orders Tab */
+    .order-columns {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 900px) {
+      .order-columns { grid-template-columns: 1fr; }
+    }
+    .col-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      height: 70vh;
+    }
+    .col-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--surface-border);
+      font-size: 0.88rem;
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .col-body {
+      padding: 12px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .order-item-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      padding: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .order-id-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .badge {
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+    .badge-pending { background: rgba(245, 158, 11, 0.2); color: #FBBF24; border: 1px solid #F59E0B; }
+    .badge-prep { background: rgba(59, 130, 246, 0.2); color: #60A5FA; border: 1px solid #3B82F6; }
+    .badge-ready { background: rgba(16, 185, 129, 0.2); color: #34D399; border: 1px solid #10B981; }
+
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    button:hover { background: var(--primary-hover); }
+    button.btn-accent { background: var(--accent); color: #000; }
+    button.btn-accent:hover { background: #D97706; }
+    button.btn-danger { background: var(--danger); }
+    button.btn-danger:hover { background: #DC2626; }
+
+    /* Catalog Tab */
+    .catalog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .menu-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .menu-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .menu-name { font-weight: 800; font-size: 1rem; }
+    .menu-cat { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+    .menu-price { font-size: 1.1rem; font-weight: 800; color: var(--accent); }
+    .stock-toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 10px;
+      border-top: 1px solid var(--surface-border);
+    }
+
+    /* Financials Tab */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 900px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .stat-card .label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; }
+    .stat-card .value { font-size: 1.5rem; font-weight: 800; }
+    .stat-card .value.green { color: var(--success); }
+    .stat-card .value.amber { color: var(--accent); }
+
+    .table-container {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--surface-border);
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--surface-border);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="/" class="logo-badge">
+      <img src="/logo.png" alt="Aladin Express">
+      <h1>Aladin <span>Express</span></h1>
+      <span class="partner-pill">Merchant Portal</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/">4-in-1 Simulator</a>
+      <a href="/partner" style="color: var(--accent); font-weight: 800;">Partner Portal</a>
+      <a href="/kitchen">Kitchen KDS</a>
+      <a href="/download">📱 Download APK</a>
+    </nav>
+  </header>
+
+  <div class="controls-bar">
+    <div class="store-select-group">
+      <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">Active Store:</span>
+      <select id="merchant-selector" onchange="switchMerchant()">
+        <optgroup label="🇩🇿 Algeria (Algiers)">
+          <option value="mch-alg-001" selected>Le Gourmet Burger Hydra (Hydra, Alger)</option>
+          <option value="mch-alg-002">Pizzeria Bella Vista (Bab Ezzouar)</option>
+          <option value="mch-alg-003">Aladin Market Darkstore (El Biar)</option>
+        </optgroup>
+        <optgroup label="🇹🇳 Tunisia (Tunis)">
+          <option value="mch-tun-001">Dar El Jeld Express (Lac 2, Tunis)</option>
+          <option value="mch-tun-002">Café des Délices Gourmet (La Marsa)</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <div class="status-toggle">
+        <div id="store-dot" class="status-dot"></div>
+        <span id="store-status-text" style="font-size: 0.85rem; font-weight: 800;">STORE OPEN</span>
+        <button onclick="toggleStoreOnline()" class="btn-accent" style="padding: 4px 10px; font-size: 0.75rem;">Toggle</button>
+      </div>
+
+      <button onclick="toggleRushMode()" id="rush-btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--surface-border); font-size: 0.8rem;">
+        ⚡ Rush Mode (+10m)
+      </button>
+    </div>
+  </div>
+
+  <div class="tabs-bar">
+    <button class="tab-btn active" onclick="switchTab('orders')">📦 Live Orders (<span id="active-count">0</span>)</button>
+    <button class="tab-btn" onclick="switchTab('catalog')">🍽️ Menu & Catalog</button>
+    <button class="tab-btn" onclick="switchTab('financials')">💰 Payouts & Ledger</button>
+    <button class="tab-btn" onclick="switchTab('settings')">⚙️ Store Settings</button>
+  </div>
+
+  <main>
+    <!-- TAB 1: LIVE ORDERS -->
+    <div id="tab-orders" class="tab-content active">
+      <div class="order-columns">
+        <!-- Col 1: Pending Acceptance -->
+        <div class="col-card">
+          <div class="col-header">
+            <span>🔔 NEW ORDERS REQUIRING ACCEPTANCE</span>
+            <span id="pending-badge" class="badge badge-pending">0</span>
+          </div>
+          <div id="pending-orders-list" class="col-body">
+            <div style="text-align: center; color: var(--text-muted); padding: 30px 10px; font-size: 0.85rem;">
+              No pending orders. Orders placed in Consumer app or simulator will appear here in real-time.
+            </div>
+          </div>
+        </div>
+
+        <!-- Col 2: Preparing in Kitchen -->
+        <div class="col-card">
+          <div class="col-header">
+            <span>👨‍🍳 IN PREPARATION</span>
+            <span id="prep-badge" class="badge badge-prep">0</span>
+          </div>
+          <div id="prep-orders-list" class="col-body">
+            <div style="text-align: center; color: var(--text-muted); padding: 30px 10px; font-size: 0.85rem;">
+              No orders currently in the kitchen.
+            </div>
+          </div>
+        </div>
+
+        <!-- Col 3: Ready / Picked Up -->
+        <div class="col-card">
+          <div class="col-header">
+            <span>🛵 COURIER HANDOFF & COMPLETED</span>
+            <span id="ready-badge" class="badge badge-ready">0</span>
+          </div>
+          <div id="ready-orders-list" class="col-body">
+            <div style="text-align: center; color: var(--text-muted); padding: 30px 10px; font-size: 0.85rem;">
+              No recently handed-off orders.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: MENU & CATALOG -->
+    <div id="tab-catalog" class="tab-content">
+      <div class="catalog-header">
+        <div>
+          <h2 style="font-size: 1.3rem;">Restaurant Menu & Stock Availability</h2>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Toggle items sold out or edit prices in real-time across Aladin Express.</p>
+        </div>
+        <button onclick="promptAddItem()" class="btn-accent">+ Add New Dish</button>
+      </div>
+
+      <div id="menu-items-grid" class="menu-grid">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- TAB 3: FINANCIALS & PAYOUTS -->
+    <div id="tab-financials" class="tab-content">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="label">Net Payable Balance</div>
+          <div id="stat-net-payable" class="value green">0 DZD</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Gross Sales (Today)</div>
+          <div id="stat-gross-sales" class="value">0 DZD</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Platform Commission (15%)</div>
+          <div id="stat-commission" class="value amber">0 DZD</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Settled Orders</div>
+          <div id="stat-order-count" class="value">0</div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h3 style="font-size: 1.1rem;">Financial Settlement Journal & RIB Payouts</h3>
+        <button onclick="requestPayout()" class="btn-accent">💳 Request Bank Transfer (Virement)</button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Transaction Ref</th>
+              <th>Order ID</th>
+              <th>Payment Gateway</th>
+              <th>Gross Amount</th>
+              <th>Commission (15%)</th>
+              <th>Net Credited</th>
+            </tr>
+          </thead>
+          <tbody id="settlement-table-body">
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                No transactions yet. Complete an order to generate double-entry financial ledger records.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 4: STORE SETTINGS -->
+    <div id="tab-settings" class="tab-content">
+      <div style="background: var(--surface); border: 1px solid var(--surface-border); border-radius: 12px; padding: 24px; max-width: 600px;">
+        <h3 style="margin-bottom: 16px;">Store Configuration</h3>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div>
+            <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Average Food Preparation Time (Minutes)</label>
+            <input type="number" id="setting-prep-time" value="15" style="width: 100%;">
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Delivery Geo-Fence Radius (Kilometers)</label>
+            <input type="number" id="setting-radius" value="8" style="width: 100%;">
+          </div>
+          <div>
+            <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Bank RIB / IBAN for Direct Payouts</label>
+            <input type="text" id="setting-rib" value="DZ59 0010 0949 0000 1234 5678 90" style="width: 100%;">
+          </div>
+          <button onclick="saveStoreSettings()" style="margin-top: 10px;">Save Store Profile</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentMerchantId = 'mch-alg-001';
+    let isStoreOnline = true;
+    let isRushActive = false;
+    let merchantCatalog = [];
+
+    const mockCatalogs = {
+      'mch-alg-001': [
+        { id: 'item-001', name: 'Classic Smash Burger Double Cheese', category: 'BURGER', price: 950, currency: 'DZD', inStock: true },
+        { id: 'item-002', name: 'Crispy Truffle Fries', category: 'SIDES', price: 450, currency: 'DZD', inStock: true },
+        { id: 'item-003', name: 'Selecto Algerian Soda 33cl', category: 'DRINK', price: 150, currency: 'DZD', inStock: true }
+      ],
+      'mch-alg-002': [
+        { id: 'item-004', name: 'Pizza Margherita Di Bufala', category: 'PIZZA', price: 1200, currency: 'DZD', inStock: true },
+        { id: 'item-005', name: 'Tiramisu Speculoos', category: 'DESSERT', price: 550, currency: 'DZD', inStock: true }
+      ],
+      'mch-alg-003': [
+        { id: 'dark-001', name: 'Lait Candia 1L', category: 'DAIRY', price: 135, currency: 'DZD', inStock: true },
+        { id: 'dark-002', name: 'Café Bonal 250g', category: 'GROCERY', price: 320, currency: 'DZD', inStock: true }
+      ],
+      'mch-tun-001': [
+        { id: 'item-tn-001', name: 'Kafteji Tunisien Traditionnel au Foie', category: 'TUNISIAN', price: 12.500, currency: 'TND', inStock: true },
+        { id: 'item-tn-002', name: 'Ojja aux Merguez Artisanales', category: 'TUNISIAN', price: 16.800, currency: 'TND', inStock: true },
+        { id: 'item-tn-003', name: 'Boga Cidre Tunisienne 33cl', category: 'DRINK', price: 2.200, currency: 'TND', inStock: true }
+      ],
+      'mch-tun-002': [
+        { id: 'item-tn-004', name: 'Bambalouni Chaud au Sucre & Miel', category: 'DESSERT', price: 4.500, currency: 'TND', inStock: true },
+        { id: 'item-tn-005', name: 'Thé à la Menthe & Pignons Dorés', category: 'TEA', price: 6.000, currency: 'TND', inStock: true }
+      ]
+    };
+
+    function switchMerchant() {
+      currentMerchantId = document.getElementById('merchant-selector').value;
+      renderCatalog();
+      refreshOrders();
+      refreshLedger();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+    }
+
+    function toggleStoreOnline() {
+      isStoreOnline = !isStoreOnline;
+      const dot = document.getElementById('store-dot');
+      const text = document.getElementById('store-status-text');
+      if (isStoreOnline) {
+        dot.className = 'status-dot';
+        text.innerText = 'STORE OPEN';
+        text.style.color = '#fff';
+      } else {
+        dot.className = 'status-dot offline';
+        text.innerText = 'STORE CLOSED';
+        text.style.color = 'var(--danger)';
+      }
+    }
+
+    function toggleRushMode() {
+      isRushActive = !isRushActive;
+      const btn = document.getElementById('rush-btn');
+      if (isRushActive) {
+        btn.style.background = 'var(--accent)';
+        btn.style.color = '#000';
+        btn.innerText = '⚡ Rush Mode Active (+10m)';
+      } else {
+        btn.style.background = 'rgba(255,255,255,0.05)';
+        btn.style.color = '#fff';
+        btn.innerText = '⚡ Rush Mode (+10m)';
+      }
+    }
+
+    function renderCatalog() {
+      const items = mockCatalogs[currentMerchantId] || [];
+      const grid = document.getElementById('menu-items-grid');
+      grid.innerHTML = items.map(item => `
+        <div class="menu-card">
+          <div class="menu-card-top">
+            <div>
+              <div class="menu-name">${item.name}</div>
+              <div class="menu-cat">${item.category}</div>
+            </div>
+            <div class="menu-price">${item.price} ${item.currency}</div>
+          </div>
+          <div class="stock-toggle-row">
+            <span style="font-size: 0.8rem; font-weight: 700; color: ${item.inStock ? 'var(--success)' : 'var(--danger)'};">
+              ${item.inStock ? '● In Stock' : '○ Sold Out (86)'}
+            </span>
+            <button onclick="toggleItemStock('${item.id}')" style="background: rgba(255,255,255,0.08); font-size: 0.75rem; padding: 4px 8px;">
+              ${item.inStock ? 'Mark Sold Out' : 'Mark Available'}
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleItemStock(itemId) {
+      const items = mockCatalogs[currentMerchantId] || [];
+      const target = items.find(i => i.id === itemId);
+      if (target) {
+        target.inStock = !target.inStock;
+        renderCatalog();
+      }
+    }
+
+    function promptAddItem() {
+      const name = prompt("Dish or Item Name:");
+      if (!name) return;
+      const price = parseFloat(prompt("Price (DZD or TND):", "500"));
+      if (isNaN(price)) return;
+      const isTN = currentMerchantId.startsWith('mch-tun');
+      const newItem = {
+        id: `item-${Date.now()}`,
+        name,
+        category: 'SPECIAL',
+        price,
+        currency: isTN ? 'TND' : 'DZD',
+        inStock: true
+      };
+      mockCatalogs[currentMerchantId].push(newItem);
+      renderCatalog();
+    }
+
+    async function refreshOrders() {
+      try {
+        const res = await fetch('/api/v1/dispatch/offers');
+        const data = await res.json();
+        // Update active orders count
+        document.getElementById('active-count').innerText = data.offers ? data.offers.length : 0;
+      } catch (e) {}
+    }
+
+    async function refreshLedger() {
+      try {
+        const res = await fetch('/api/v1/admin/ledger');
+        const data = await res.json();
+        if (data.success) {
+          const isTN = currentMerchantId.startsWith('mch-tun');
+          const mchKey = `MERCHANT_PAYABLE_${currentMerchantId}`;
+          const net = data.balances[mchKey] || 0;
+          const div = isTN ? 1000 : 100;
+          const cur = isTN ? 'TND' : 'DZD';
+          document.getElementById('stat-net-payable').innerText = `${(net / div).toFixed(isTN?3:0)} ${cur}`;
+        }
+      } catch (e) {}
+    }
+
+    function requestPayout() {
+      const rib = document.getElementById('setting-rib').value;
+      alert(`✓ Payout Request Submitted!\nBank Transfer initiated to RIB: ${rib}\nFunds will be credited via Central Bank RTGS / Virement Interbancaire within 24 hours.`);
+    }
+
+    function saveStoreSettings() {
+      alert("✓ Store settings updated successfully.");
+    }
+
+    window.onload = () => {
+      renderCatalog();
+      refreshOrders();
+      refreshLedger();
+      setInterval(refreshOrders, 4000);
+      setInterval(refreshLedger, 5000);
+    };
+  </script>
+</body>
+</html>
