@@ -92,6 +92,16 @@ function createApp() {
             res.redirect('/');
         }
     });
+    // Dedicated Admin Fleet & Operations Command Center
+    app.get('/admin', (_req, res) => {
+        const adminPath = path_1.default.join(publicDir, 'admin.html');
+        if (fs_1.default.existsSync(adminPath)) {
+            res.sendFile(adminPath);
+        }
+        else {
+            res.redirect('/');
+        }
+    });
     // Dedicated Android APK Download & Barcode Page
     app.get('/download', (_req, res) => {
         const downloadPagePath = path_1.default.join(publicDir, 'download.html');

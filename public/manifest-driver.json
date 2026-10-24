@@ -1,0 +1,17 @@
+{
+  "name": "Aladin Driver",
+  "short_name": "Aladin Driver",
+  "description": "Application Chauffeur & Coursier Partenaire Aladin Express",
+  "start_url": "/driver",
+  "display": "standalone",
+  "background_color": "#0B0F19",
+  "theme_color": "#F59E0B",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/driver-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

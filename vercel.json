@@ -19,6 +19,10 @@
       "destination": "/kitchen.html"
     },
     {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
       "source": "/download",
       "destination": "/download.html"
     },
