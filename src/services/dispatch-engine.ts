@@ -76,7 +76,8 @@ export class DispatchEngine {
       const acceptanceWeight = 0.3;
       const debtWeight = 0.2;
 
-      const debtRatio = courier.currentCashDebtCents / courier.maxCashLimitCents;
+      const maxLimit = courier.maxCashLimitCents > 0 ? courier.maxCashLimitCents : 1;
+      const debtRatio = courier.currentCashDebtCents / maxLimit;
       const score =
         distanceWeight * distanceKm +
         acceptanceWeight * (1.0 - courier.acceptanceRate) * 10 +
