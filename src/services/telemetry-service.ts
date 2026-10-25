@@ -90,6 +90,10 @@ export class TelemetryService {
     return this.couriers.get(courierId);
   }
 
+  public registerCourier(courier: Courier): void {
+    this.couriers.set(courier.id, courier);
+  }
+
   public getAllCouriers(): Courier[] {
     return Array.from(this.couriers.values());
   }

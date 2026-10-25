@@ -86,6 +86,9 @@ class TelemetryService {
     getCourier(courierId) {
         return this.couriers.get(courierId);
     }
+    registerCourier(courier) {
+        this.couriers.set(courier.id, courier);
+    }
     getAllCouriers() {
         return Array.from(this.couriers.values());
     }

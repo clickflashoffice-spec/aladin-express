@@ -298,3 +298,41 @@ test('Security & Robustness: Input validation, secure OTP, and cross-region debt
   const digitalEntries = entries.filter(e => e.id.includes('dig-'));
   assert.strictEqual(digitalEntries.length, 4); // clear, merch, cour, plat
 });
+
+test('Dispatch Engine: Zero-division guard and candidate ranking finite numerical stability', () => {
+  const telemetry = new TelemetryService();
+  const ledger = new LedgerService();
+  const dispatch = new DispatchEngine(telemetry, ledger);
+
+  const testCourier: any = {
+    id: 'courier-guard-001',
+    fullName: 'Safeguard Courier',
+    phoneNumber: '+21699887766',
+    vehicleType: 'MOTORCYCLE',
+    status: CourierStatus.ONLINE_IDLE,
+    currentLocation: { latitude: 36.8400, longitude: 10.2380 },
+    lastPingAt: new Date(),
+    acceptanceRate: 1.0,
+    currentCashDebtCents: 0,
+    maxCashLimitCents: 1000, // Valid credit headroom
+  };
+
+  telemetry.registerCourier(testCourier);
+
+  const mockOrder: any = {
+    id: 'ord-ranking-stability',
+    merchantId: 'mch-tun-001',
+    currency: 'TND',
+  };
+
+  const candidates = dispatch.rankCandidates(mockOrder, { latitude: 36.8410, longitude: 10.2390 });
+  assert.strictEqual(Array.isArray(candidates), true);
+  assert.strictEqual(candidates.length > 0, true);
+
+  // Guarantee every score is a finite real number, never NaN or Infinity
+  for (const c of candidates) {
+    assert.strictEqual(Number.isFinite(c.score), true);
+    assert.strictEqual(Number.isNaN(c.score), false);
+    assert.strictEqual(c.score >= 0, true);
+  }
+});
