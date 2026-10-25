@@ -932,9 +932,36 @@
       document.getElementById('offerModal').style.display = 'none';
     }
 
+    // Cross-tab Ecosystem Sync Channel
+    const ecosystemChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('aladin_ecosystem') : null;
+
+    if (ecosystemChannel) {
+      ecosystemChannel.onmessage = (event) => {
+        const msg = event.data;
+        if (!msg) return;
+
+        if (msg.type === 'NEW_ORDER_DISPATCH' && isOnline && missionStep === 0) {
+          // Dynamic order offer from customer app!
+          if (msg.order) {
+            document.getElementById('activeMissionId').innerText = `COMMANDE #${msg.order.id}`;
+            if (msg.order.deliveryOtp) {
+              window._expectedOtp = msg.order.deliveryOtp;
+            }
+          }
+          triggerNewOffer();
+        }
+      };
+    }
+
     function acceptOffer() {
       clearInterval(countdownInterval);
       document.getElementById('offerModal').style.display = 'none';
+      if (ecosystemChannel) {
+        ecosystemChannel.postMessage({
+          type: 'COURIER_ACCEPTED',
+          courierName: 'Mohamed B. (Scooter Yamaha)'
+        });
+      }
       startMission();
     }
 
@@ -1021,12 +1048,14 @@
     }
 
     function advanceMissionStep() {
+      let stepLabel = '';
       if (missionStep === 1) {
         // Arrived at restaurant: move scooter marker to restaurant
         const pos = pickupMarker.getLatLng();
         driverMarker.setLatLng(pos);
         missionStep = 2;
         updateMissionStepUI();
+        stepLabel = 'LIVREUR ARRIVÉ AU RESTAURANT';
       } else if (missionStep === 2) {
         // Picked up order, route to customer
         const dLat = driverMarker.getLatLng().lat;
@@ -1054,16 +1083,28 @@
         map.fitBounds([[dLat, dLng], [cLat, cLng]], { padding: [60, 60] });
         missionStep = 3;
         updateMissionStepUI();
+        stepLabel = 'COMMANDE RÉCUPÉRÉE, EN ROUTE VERS VOUS';
       } else if (missionStep === 3) {
         // Arrived at client
         const pos = dropoffMarker.getLatLng();
         driverMarker.setLatLng(pos);
         missionStep = 4;
         updateMissionStepUI();
+        stepLabel = 'LIVREUR ARRIVÉ DEVANT CHEZ VOUS !';
       } else if (missionStep === 4) {
         // Open OTP Handover modal
         document.getElementById('otpModal').style.display = 'flex';
         document.getElementById('otp1').focus();
+        return;
+      }
+
+      if (ecosystemChannel) {
+        ecosystemChannel.postMessage({
+          type: 'COURIER_STEP_ADVANCE',
+          location: driverMarker.getLatLng(),
+          step: missionStep,
+          stepLabel
+        });
       }
     }
 
@@ -1093,6 +1134,12 @@
       // Success
       alert('🎉 MISSION VALIDÉE AVEC SUCCÈS !\n\n+5.800 DT crédités sur votre compte chauffeur.\nEspèces collectées : 38.500 DT.');
       closeOtpModal();
+
+      if (ecosystemChannel) {
+        ecosystemChannel.postMessage({
+          type: 'ORDER_DELIVERED'
+        });
+      }
 
       // Reset markers & return to idle
       if (pickupMarker) map.removeLayer(pickupMarker);

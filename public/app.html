@@ -686,6 +686,7 @@
           updateCartBar();
           switchNav('track');
           startTrackingOrder(activeOrder);
+          broadcastOrder(activeOrder);
         } else {
           alert('Erreur: ' + data.error);
         }
@@ -702,6 +703,7 @@
         updateCartBar();
         switchNav('track');
         startTrackingOrder(activeOrder);
+        broadcastOrder(activeOrder);
       } finally {
         btn.disabled = false;
         btn.innerText = '✓ Confirmer & Commander';
@@ -775,6 +777,43 @@
     function handleSearch() {
       const q = document.getElementById('search-input').value;
       renderRestaurants('ALL', q);
+    }
+
+    // Cross-tab Ecosystem Sync Channel
+    const ecosystemChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('aladin_ecosystem') : null;
+
+    function broadcastOrder(order) {
+      if (ecosystemChannel) {
+        ecosystemChannel.postMessage({
+          type: 'NEW_ORDER_DISPATCH',
+          order,
+          region: currentRegion
+        });
+      }
+    }
+
+    if (ecosystemChannel) {
+      ecosystemChannel.onmessage = (event) => {
+        const msg = event.data;
+        if (!msg) return;
+
+        if (msg.type === 'COURIER_ACCEPTED' && activeOrder) {
+          document.getElementById('track-courier-name').innerText = `Livreur: ${msg.courierName || 'Mohamed B.'} (🛵 Accepté)`;
+          document.getElementById('track-status-pill').innerText = 'LIVREUR EN ROUTE VERS LE RESTAURANT';
+        } else if (msg.type === 'COURIER_STEP_ADVANCE' && activeOrder) {
+          if (msg.location && courierMarker) {
+            courierMarker.setLatLng([msg.location.lat, msg.location.lng]);
+            if (map) map.panTo([msg.location.lat, msg.location.lng]);
+          }
+          if (msg.stepLabel) {
+            document.getElementById('track-status-pill').innerText = msg.stepLabel;
+          }
+        } else if (msg.type === 'ORDER_DELIVERED' && activeOrder) {
+          document.getElementById('track-status-pill').innerText = 'COMMANDE LIVRÉE ! BON APPÉTIT !';
+          document.getElementById('track-status-pill').style.background = '#10B981';
+          document.getElementById('track-status-pill').style.color = '#fff';
+        }
+      };
     }
 
     window.onload = () => {

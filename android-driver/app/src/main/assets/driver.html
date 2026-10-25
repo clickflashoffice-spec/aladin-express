@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Aladin Driver - Application Chauffeur & Coursier</title>
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="manifest" href="/manifest-driver.json">
+  <meta name="theme-color" content="#F59E0B">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
@@ -928,9 +932,36 @@
       document.getElementById('offerModal').style.display = 'none';
     }
 
+    // Cross-tab Ecosystem Sync Channel
+    const ecosystemChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('aladin_ecosystem') : null;
+
+    if (ecosystemChannel) {
+      ecosystemChannel.onmessage = (event) => {
+        const msg = event.data;
+        if (!msg) return;
+
+        if (msg.type === 'NEW_ORDER_DISPATCH' && isOnline && missionStep === 0) {
+          // Dynamic order offer from customer app!
+          if (msg.order) {
+            document.getElementById('activeMissionId').innerText = `COMMANDE #${msg.order.id}`;
+            if (msg.order.deliveryOtp) {
+              window._expectedOtp = msg.order.deliveryOtp;
+            }
+          }
+          triggerNewOffer();
+        }
+      };
+    }
+
     function acceptOffer() {
       clearInterval(countdownInterval);
       document.getElementById('offerModal').style.display = 'none';
+      if (ecosystemChannel) {
+        ecosystemChannel.postMessage({
+          type: 'COURIER_ACCEPTED',
+          courierName: 'Mohamed B. (Scooter Yamaha)'
+        });
+      }
       startMission();
     }
 
@@ -1017,12 +1048,14 @@
     }
 
     function advanceMissionStep() {
+      let stepLabel = '';
       if (missionStep === 1) {
         // Arrived at restaurant: move scooter marker to restaurant
         const pos = pickupMarker.getLatLng();
         driverMarker.setLatLng(pos);
         missionStep = 2;
         updateMissionStepUI();
+        stepLabel = 'LIVREUR ARRIVÉ AU RESTAURANT';
       } else if (missionStep === 2) {
         // Picked up order, route to customer
         const dLat = driverMarker.getLatLng().lat;
@@ -1050,16 +1083,28 @@
         map.fitBounds([[dLat, dLng], [cLat, cLng]], { padding: [60, 60] });
         missionStep = 3;
         updateMissionStepUI();
+        stepLabel = 'COMMANDE RÉCUPÉRÉE, EN ROUTE VERS VOUS';
       } else if (missionStep === 3) {
         // Arrived at client
         const pos = dropoffMarker.getLatLng();
         driverMarker.setLatLng(pos);
         missionStep = 4;
         updateMissionStepUI();
+        stepLabel = 'LIVREUR ARRIVÉ DEVANT CHEZ VOUS !';
       } else if (missionStep === 4) {
         // Open OTP Handover modal
         document.getElementById('otpModal').style.display = 'flex';
         document.getElementById('otp1').focus();
+        return;
+      }
+
+      if (ecosystemChannel) {
+        ecosystemChannel.postMessage({
+          type: 'COURIER_STEP_ADVANCE',
+          location: driverMarker.getLatLng(),
+          step: missionStep,
+          stepLabel
+        });
       }
     }
 
@@ -1090,6 +1135,12 @@
       alert('🎉 MISSION VALIDÉE AVEC SUCCÈS !\n\n+5.800 DT crédités sur votre compte chauffeur.\nEspèces collectées : 38.500 DT.');
       closeOtpModal();
 
+      if (ecosystemChannel) {
+        ecosystemChannel.postMessage({
+          type: 'ORDER_DELIVERED'
+        });
+      }
+
       // Reset markers & return to idle
       if (pickupMarker) map.removeLayer(pickupMarker);
       if (dropoffMarker) map.removeLayer(dropoffMarker);
@@ -1113,6 +1164,9 @@
     // Bootstrap
     window.addEventListener('DOMContentLoaded', () => {
       initMap(36.8392, 10.2444); // Tunis Lac 2
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration error:', err));
+      }
       // Trigger a sample dispatch offer after 2 seconds
       setTimeout(() => {
         if (missionStep === 0 && isOnline) triggerNewOffer();

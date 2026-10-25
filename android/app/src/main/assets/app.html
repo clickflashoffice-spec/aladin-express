@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Aladin Express - Food & Grocery Delivery</title>
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="manifest" href="/manifest-consumer.json">
+  <meta name="theme-color" content="#047857">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
@@ -682,6 +686,7 @@
           updateCartBar();
           switchNav('track');
           startTrackingOrder(activeOrder);
+          broadcastOrder(activeOrder);
         } else {
           alert('Erreur: ' + data.error);
         }
@@ -698,6 +703,7 @@
         updateCartBar();
         switchNav('track');
         startTrackingOrder(activeOrder);
+        broadcastOrder(activeOrder);
       } finally {
         btn.disabled = false;
         btn.innerText = '✓ Confirmer & Commander';
@@ -773,8 +779,48 @@
       renderRestaurants('ALL', q);
     }
 
+    // Cross-tab Ecosystem Sync Channel
+    const ecosystemChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('aladin_ecosystem') : null;
+
+    function broadcastOrder(order) {
+      if (ecosystemChannel) {
+        ecosystemChannel.postMessage({
+          type: 'NEW_ORDER_DISPATCH',
+          order,
+          region: currentRegion
+        });
+      }
+    }
+
+    if (ecosystemChannel) {
+      ecosystemChannel.onmessage = (event) => {
+        const msg = event.data;
+        if (!msg) return;
+
+        if (msg.type === 'COURIER_ACCEPTED' && activeOrder) {
+          document.getElementById('track-courier-name').innerText = `Livreur: ${msg.courierName || 'Mohamed B.'} (🛵 Accepté)`;
+          document.getElementById('track-status-pill').innerText = 'LIVREUR EN ROUTE VERS LE RESTAURANT';
+        } else if (msg.type === 'COURIER_STEP_ADVANCE' && activeOrder) {
+          if (msg.location && courierMarker) {
+            courierMarker.setLatLng([msg.location.lat, msg.location.lng]);
+            if (map) map.panTo([msg.location.lat, msg.location.lng]);
+          }
+          if (msg.stepLabel) {
+            document.getElementById('track-status-pill').innerText = msg.stepLabel;
+          }
+        } else if (msg.type === 'ORDER_DELIVERED' && activeOrder) {
+          document.getElementById('track-status-pill').innerText = 'COMMANDE LIVRÉE ! BON APPÉTIT !';
+          document.getElementById('track-status-pill').style.background = '#10B981';
+          document.getElementById('track-status-pill').style.color = '#fff';
+        }
+      };
+    }
+
     window.onload = () => {
       renderRestaurants();
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration error:', err));
+      }
     };
   </script>
 </body>
