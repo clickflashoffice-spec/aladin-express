@@ -7,32 +7,46 @@
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
   <style>
     :root {
-      --primary: #047857;
-      --primary-hover: #065F46;
+      --primary: #059669;
+      --primary-gradient: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      --primary-hover: #047857;
       --accent: #F59E0B;
-      --bg: #0A0D14;
-      --surface: #121826;
-      --surface-border: #1F293D;
+      --accent-gradient: linear-gradient(135deg, #FBBF24 0%, #D97706 100%);
+      --bg: #06090F;
+      --surface: #0E1422;
+      --surface-glass: rgba(14, 20, 34, 0.9);
+      --surface-border: rgba(255, 255, 255, 0.09);
+      --card-bg: #141C2E;
       --text: #F8FAFC;
       --text-muted: #94A3B8;
       --success: #10B981;
       --warning: #F59E0B;
       --danger: #EF4444;
       --blue: #3B82F6;
+      --shadow-md: 0 10px 30px -5px rgba(0, 0, 0, 0.7);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Inter', 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
     body { background-color: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
     /* Kitchen Header */
     header {
-      background: #0F1420;
+      background: var(--surface-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-bottom: 2px solid var(--surface-border);
-      padding: 8px 18px;
+      padding: 10px 22px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      height: 60px;
+      height: 64px;
+      z-index: 50;
     }
     .kds-branding {
       display: flex;
@@ -41,16 +55,16 @@
       text-decoration: none;
       color: inherit;
     }
-    .kds-branding img { width: 34px; height: 34px; border-radius: 8px; }
-    .kds-title { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.5px; }
+    .kds-branding img { width: 36px; height: 36px; border-radius: 10px; box-shadow: 0 0 12px rgba(239, 68, 68, 0.3); }
+    .kds-title { font-size: 1.25rem; font-weight: 850; letter-spacing: -0.4px; }
     .kds-badge {
-      background: rgba(239, 68, 68, 0.2);
-      border: 1px solid var(--danger);
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
       color: #F87171;
       font-size: 0.72rem;
       font-weight: 800;
-      padding: 3px 8px;
-      border-radius: 6px;
+      padding: 3px 10px;
+      border-radius: 8px;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
@@ -61,39 +75,45 @@
       align-items: center;
     }
     .kds-clock {
-      font-family: 'Courier New', monospace;
-      font-size: 1.3rem;
-      font-weight: 800;
-      color: var(--accent);
-      background: rgba(0, 0, 0, 0.4);
-      padding: 4px 12px;
-      border-radius: 6px;
-      border: 1px solid var(--surface-border);
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: #FBBF24;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 5px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.2);
+      letter-spacing: 1px;
     }
     .sound-toggle-btn {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--surface-border);
       color: #fff;
-      font-size: 0.85rem;
-      padding: 6px 12px;
-      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 7px 14px;
+      border-radius: 10px;
       cursor: pointer;
+      transition: all 0.2s;
     }
     .sound-toggle-btn.active {
       border-color: var(--success);
       color: var(--success);
+      background: rgba(16, 185, 129, 0.12);
     }
 
     .nav-links a {
       color: var(--text-muted);
       text-decoration: none;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-left: 12px;
-      padding: 6px 10px;
-      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-left: 10px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      transition: all 0.2s;
     }
-    .nav-links a:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+    .nav-links a:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
 
     /* Top Filter Bar */
     .filter-bar {

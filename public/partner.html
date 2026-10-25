@@ -7,30 +7,48 @@
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
   <style>
     :root {
-      --primary: #047857;
-      --primary-hover: #065F46;
+      --primary: #059669;
+      --primary-gradient: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      --primary-hover: #047857;
       --accent: #F59E0B;
-      --bg: #0B0F19;
-      --surface: #151D2F;
-      --surface-border: #232E45;
-      --text: #F1F5F9;
+      --accent-gradient: linear-gradient(135deg, #FBBF24 0%, #D97706 100%);
+      --bg: #070A11;
+      --surface: #101626;
+      --surface-glass: rgba(16, 22, 38, 0.88);
+      --surface-border: rgba(255, 255, 255, 0.08);
+      --surface-hover: rgba(255, 255, 255, 0.04);
+      --card-bg: #151D30;
+      --text: #F8FAFC;
       --text-muted: #94A3B8;
       --success: #10B981;
       --danger: #EF4444;
       --tunisia-red: #E70013;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+      --shadow-md: 0 10px 30px -5px rgba(0, 0, 0, 0.6);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Inter', 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
     body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
     header {
-      background: var(--surface);
+      background: var(--surface-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--surface-border);
-      padding: 10px 20px;
+      padding: 10px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      height: 60px;
+      height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
     }
     .logo-badge {
       display: flex;
@@ -39,34 +57,40 @@
       text-decoration: none;
       color: inherit;
     }
-    .logo-badge img { width: 34px; height: 34px; border-radius: 8px; }
-    .logo-badge h1 { font-size: 1.15rem; font-weight: 800; }
+    .logo-badge img { width: 36px; height: 36px; border-radius: 10px; box-shadow: 0 0 12px rgba(16, 185, 129, 0.3); }
+    .logo-badge h1 { font-size: 1.18rem; font-weight: 850; letter-spacing: -0.3px; }
     .logo-badge h1 span { color: var(--accent); }
     .partner-pill {
       background: rgba(245, 158, 11, 0.15);
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      font-size: 0.72rem;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #FBBF24;
+      font-size: 0.7rem;
       font-weight: 800;
-      padding: 3px 8px;
-      border-radius: 6px;
+      padding: 3px 9px;
+      border-radius: 8px;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .nav-links {
       display: flex;
-      gap: 10px;
+      gap: 8px;
     }
     .nav-links a {
       color: var(--text-muted);
       text-decoration: none;
-      font-size: 0.85rem;
-      font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 7px 14px;
+      border-radius: 10px;
       transition: all 0.2s;
+      border: 1px solid transparent;
     }
-    .nav-links a:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+    .nav-links a:hover, .nav-links a.active {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--surface-border);
+    }
 
     /* Top Controls Bar */
     .controls-bar {
